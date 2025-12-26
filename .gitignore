@@ -1,0 +1,16 @@
+# Chặn rác hệ thống
+.DS_Store
+
+# Chặn rác Backend (Java)
+backend/target/
+backend/.mvn/
+backend/mvnw
+backend/mvnw.cmd
+backend/.idea/
+backend/.vscode/
+**/*.class
+
+# Chặn rác Frontend (NodeJS)
+frontend/node_modules/
+frontend/dist/
+frontend/build/
