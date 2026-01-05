@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import ProductTest from './components/ProductTest';
 
 function App() {
   // 1. Biến lưu thông tin đăng nhập
@@ -36,6 +37,7 @@ function App() {
 
   return (
     <div className="container mt-5">
+      
       <h1 className="text-center text-primary mb-4">👟 Sneaker Store Project</h1>
 
       <div className="row">
@@ -99,7 +101,9 @@ function App() {
           </div>
         </div>
       </div>
+      <ProductTest />
     </div>
+    
   );
 }
 
