@@ -2,7 +2,8 @@ package com.sneakerstore.backend.dtos;
 
 import lombok.*;
 
-@Data // Tự tạo Getter/Setter
+@Data
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserLoginDTO {

@@ -18,19 +18,12 @@ import org.springframework.web.bind.annotation.*;
 public class ProductController {
 
     private final ProductService productService;
-
-    // 1. Tạo sản phẩm mới
     @PostMapping("")
-    public ResponseEntity<?> createProduct(@RequestBody ProductDTO productDTO) {
-        try {
-            Product newProduct = productService.createProduct(productDTO);
-            return ResponseEntity.ok(newProduct);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<?> createProduct(@RequestBody ProductDTO productDTO) throws Exception {
+        Product newProduct = productService.createProduct(productDTO);
+        return ResponseEntity.ok(newProduct);
     }
 
-    // 2. Lấy danh sách (có phân trang)
     @GetMapping("")
     public ResponseEntity<?> getAllProducts(
             @RequestParam(defaultValue = "0") int page,
@@ -42,17 +35,12 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    public EntityModel<Product> getProductById(@PathVariable Long id) {
-        try {
-            Product product = productService.getProductById(id);
-            
-            return EntityModel.of(product,
-                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getProductById(id)).withSelfRel(),
-                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getAllProducts(0, 10)).withRel("list-products")
-            );
-        } catch (Exception e) {
-            return null; 
-        }
+    public EntityModel<Product> getProductById(@PathVariable Long id) throws Exception {
+        Product product = productService.getProductById(id);
+        return EntityModel.of(product,
+            WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getProductById(id)).withSelfRel(),
+            WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getAllProducts(0, 10)).withRel("list-products")
+        );
     }
     
     @GetMapping("/search")

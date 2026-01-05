@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import ProductTest from './components/ProductTest';
+import ProductTest from './components/ProductTest.jsx';
 
 function App() {
   // 1. Biến lưu thông tin đăng nhập
