@@ -83,7 +83,7 @@ const ProductTest = () => {
 
     return (
         <div style={{ padding: '20px', fontFamily: 'Arial', maxWidth: '1200px', margin: '0 auto', background: '#f4f6f8', minHeight: '100vh' }}>
-            <h1 style={{ textAlign: 'center', color: '#2c3e50', marginBottom: '30px' }}>🚀 DASHBOARD TEST API (FULL)</h1>
+            <h1 style={{ textAlign: 'center', color: '#2c3e50', marginBottom: '30px' }}>🚀 DASHBOARD TEST</h1>
 
             {/* --- KHUNG 1: TÀI KHOẢN --- */}
             <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', marginBottom: '20px' }}>
@@ -101,14 +101,14 @@ const ProductTest = () => {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         <input style={inputStyle} placeholder="SĐT..." value={loginData.phoneNumber} onChange={e => setLoginData({...loginData, phoneNumber: e.target.value})} />
                         <input style={inputStyle} type="password" placeholder="Pass..." value={loginData.password} onChange={e => setLoginData({...loginData, password: e.target.value})} />
-                        <button onClick={handleLogin} style={{ background: '#4CAF50', color: 'white', padding: '10px', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>Lấy Token</button>
+                        <button onClick={handleLogin} style={{ background: '#4CAF50', color: 'white', padding: '10px', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>Đăng nhập</button>
                     </div>
                 </div>
             </div>
 
             {/* --- KHUNG 2: QUẢN LÝ SẢN PHẨM --- */}
             <div style={{ ...cardStyle, borderTop: '4px solid #FF9800' }}>
-                <h3 style={{ color: '#F57C00', marginTop: 0 }}>👟 3. Thêm Giày (Cần Token)</h3>
+                <h3 style={{ color: '#F57C00', marginTop: 0 }}>👟 3. Thêm Giày</h3>
                 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                     <input style={{...inputStyle, flex: 2}} placeholder="Tên giày..." value={newProduct.name} onChange={e => setNewProduct({...newProduct, name: e.target.value})} />
                     <input style={{...inputStyle, flex: 1}} type="number" placeholder="Giá..." value={newProduct.price} onChange={e => setNewProduct({...newProduct, price: parseFloat(e.target.value)})} />
@@ -126,7 +126,7 @@ const ProductTest = () => {
 
             {/* --- KHUNG 3: TÌM KIẾM --- */}
             <div style={{ ...cardStyle }}>
-                <h3 style={{marginTop: 0}}>🔍 4. Tìm kiếm nâng cao</h3>
+                <h3 style={{marginTop: 0}}>🔍 4. Tìm kiếm</h3>
                 <div style={{display: 'flex', gap: '10px', flexWrap: 'wrap'}}>
                     <input style={{...inputStyle, flex: 2}} placeholder="Nhập tên giày..." value={keyword} onChange={e => setKeyword(e.target.value)} />
                     <input style={{...inputStyle, flex: 1}} type="number" placeholder="Min giá" value={minPrice} onChange={e => setMinPrice(e.target.value)}/>
