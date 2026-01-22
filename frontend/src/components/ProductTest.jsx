@@ -9,7 +9,7 @@ const ProductTest = () => {
     const [minPrice, setMinPrice] = useState(0);
     const [maxPrice, setMaxPrice] = useState(10000000);
     
-    // --- STATE 2: DANH MỤC (CATEGORIES) - MỚI THÊM ---
+    // --- STATE 2: DANH MỤC (CATEGORIES) ---
     const [categories, setCategories] = useState([]);
 
     // --- STATE 3: FORM THÊM SẢN PHẨM ---
@@ -30,19 +30,48 @@ const ProductTest = () => {
 
     // --- CÁC HÀM GỌI API ---
 
-    // 1. Lấy danh sách sản phẩm
+    // 1. Lấy danh sách sản phẩm (ĐÃ SỬA)
     const fetchProducts = async () => {
-        try { const res = await axios.get('http://localhost:8080/api/products'); setProducts(res.data); setDetail(null); } catch (err) { alert('Lỗi Products: ' + err.message); }
+        try { 
+            // Thêm limit để lấy nhiều hơn mặc định
+            const res = await axios.get('http://localhost:8080/api/products?page=0&limit=100'); 
+            
+            // 🔥 SỬA QUAN TRỌNG: Backend trả về Page, nên dữ liệu nằm trong .content
+            // Nếu res.data.content tồn tại thì lấy nó, nếu không (trường hợp API cũ) thì lấy res.data
+            const list = res.data.content || res.data; 
+            
+            if(Array.isArray(list)) {
+                setProducts(list);
+            } else {
+                setProducts([]); // Fallback nếu dữ liệu sai định dạng
+                console.error("Dữ liệu nhận được không phải mảng:", res.data);
+            }
+            setDetail(null); 
+        } catch (err) { 
+            console.error(err);
+            alert('Lỗi Products: ' + err.message); 
+        }
     };
 
-    // 2. (MỚI) Lấy danh sách danh mục
+    // 2. Lấy danh sách danh mục
     const fetchCategories = async () => {
         try { const res = await axios.get('http://localhost:8080/api/categories'); setCategories(res.data); } catch (err) { console.error('Lỗi Categories: ' + err.message); }
     };
 
-    // 3. Tìm kiếm
+    // 3. Tìm kiếm (ĐÃ SỬA)
     const handleSearch = async () => {
-        try { const res = await axios.get(`http://localhost:8080/api/products/search`, { params: { keyword, minPrice, maxPrice } }); setProducts(res.data); } catch (err) { alert('Lỗi Search: ' + err.message); }
+        try { 
+            const res = await axios.get(`http://localhost:8080/api/products/search`, { 
+                params: { keyword, minPrice, maxPrice, page: 0, limit: 100 } 
+            }); 
+            
+            // 🔥 SỬA QUAN TRỌNG: Tương tự như fetchProducts, phải chọc vào .content
+            const list = res.data.content || res.data;
+            setProducts(Array.isArray(list) ? list : []);
+            
+        } catch (err) { 
+            alert('Lỗi Search: ' + err.message); 
+        }
     };
 
     // 4. Xem chi tiết
@@ -78,7 +107,7 @@ const ProductTest = () => {
     // Chạy khi load trang
     useEffect(() => {
         fetchProducts();
-        fetchCategories(); // Gọi thêm hàm này
+        fetchCategories(); 
     }, []);
 
     return (
@@ -113,7 +142,6 @@ const ProductTest = () => {
                     <input style={{...inputStyle, flex: 2}} placeholder="Tên giày..." value={newProduct.name} onChange={e => setNewProduct({...newProduct, name: e.target.value})} />
                     <input style={{...inputStyle, flex: 1}} type="number" placeholder="Giá..." value={newProduct.price} onChange={e => setNewProduct({...newProduct, price: parseFloat(e.target.value)})} />
                     
-                    {/* Select Box chọn Category ID */}
                     <select style={{...inputStyle, flex: 1}} value={newProduct.category_id} onChange={e => setNewProduct({...newProduct, category_id: parseInt(e.target.value)})}>
                         {categories.map(c => (
                             <option key={c.id} value={c.id}>{c.id} - {c.name}</option>
@@ -139,7 +167,7 @@ const ProductTest = () => {
             {/* --- KHUNG 4: DANH SÁCH & CHI TIẾT --- */}
             <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
                 
-                {/* DANH SÁCH CATEGORIES (MỚI THÊM VÀO) */}
+                {/* DANH SÁCH CATEGORIES */}
                 <div style={{ width: '250px', ...cardStyle }}>
                     <h3 style={{ marginTop: 0, color: '#673AB7' }}>📂 Danh mục</h3>
                     <ul style={{ listStyle: 'none', padding: 0 }}>
@@ -154,14 +182,19 @@ const ProductTest = () => {
 
                 {/* DANH SÁCH SẢN PHẨM */}
                 <div style={{ flex: 1, ...cardStyle }}>
-                    <h3 style={{ marginTop: 0 }}>📦 Sản phẩm ({products.length})</h3>
+                    <h3 style={{ marginTop: 0 }}>📦 Sản phẩm ({products?.length || 0})</h3>
                     <ul style={{ listStyle: 'none', padding: 0 }}>
-                        {products.map(p => (
-                            <li key={p.id} style={{ marginBottom: '10px', padding: '15px', background: '#f9f9f9', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div><strong style={{fontSize: '1.1em'}}>{p.name}</strong> <span style={{color: 'green'}}>{p.price.toLocaleString()} đ</span></div>
-                                <button onClick={() => viewDetail(p.id)} style={{ padding: '5px 10px', border: '1px solid #2196F3', color: '#2196F3', borderRadius: '4px', background: 'white', cursor: 'pointer' }}>Chi tiết</button>
-                            </li>
-                        ))}
+                        {/* 🔥 SỬA QUAN TRỌNG: Thêm dấu ? và kiểm tra mảng rỗng để tránh lỗi màn hình trắng */}
+                        {products && products.length > 0 ? (
+                            products.map(p => (
+                                <li key={p.id} style={{ marginBottom: '10px', padding: '15px', background: '#f9f9f9', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <div><strong style={{fontSize: '1.1em'}}>{p.name}</strong> <span style={{color: 'green'}}>{p.price.toLocaleString()} đ</span></div>
+                                    <button onClick={() => viewDetail(p.id)} style={{ padding: '5px 10px', border: '1px solid #2196F3', color: '#2196F3', borderRadius: '4px', background: 'white', cursor: 'pointer' }}>Chi tiết</button>
+                                </li>
+                            ))
+                        ) : (
+                            <p style={{fontStyle: 'italic', color: '#999'}}>Không có sản phẩm nào.</p>
+                        )}
                     </ul>
                 </div>
 
@@ -177,8 +210,8 @@ const ProductTest = () => {
                             <strong>🔗 HATEOAS Links:</strong>
                             {detail._links ? (
                                 <ul style={{ fontSize: '0.9em', wordBreak: 'break-all', paddingLeft: '20px' }}>
-                                    <li><a href={detail._links.self.href}>Self Link</a></li>
-                                    <li><a href={detail._links['list-products'].href}>Back to List</a></li>
+                                    {detail._links.self && <li><a href={detail._links.self.href}>Self Link</a></li>}
+                                    {detail._links['list-products'] && <li><a href={detail._links['list-products'].href}>Back to List</a></li>}
                                 </ul>
                             ) : <p style={{color: 'red'}}>No links</p>}
                         </div>

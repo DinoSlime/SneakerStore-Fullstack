@@ -22,7 +22,6 @@ public class ProductServiceImpl implements ProductService {
     public Product createProduct(ProductDTO productDTO) throws Exception {
         Category existingCategory = categoryRepository.findById(productDTO.getCategoryId())
                 .orElseThrow(() -> new Exception("Không tìm thấy Category với ID: " + productDTO.getCategoryId()));
-
         Product newProduct = Product.builder()
                 .name(productDTO.getName())
                 .price(productDTO.getPrice())
@@ -44,10 +43,10 @@ public class ProductServiceImpl implements ProductService {
     public Page<Product> getAllProducts(PageRequest pageRequest) {
         return productRepository.findAll(pageRequest);
     }
-    
+
     @Override
     public Page<Product> searchProducts(String keyword, Float minPrice, Float maxPrice, PageRequest pageRequest) {
 
-        return productRepository.findByNameContainingAndPriceBetween(keyword, minPrice, maxPrice, pageRequest);
+        return productRepository.searchProducts(keyword, minPrice, maxPrice, pageRequest);
     }
 }

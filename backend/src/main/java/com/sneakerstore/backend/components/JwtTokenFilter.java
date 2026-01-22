@@ -44,23 +44,18 @@ public class JwtTokenFilter extends OncePerRequestFilter {
             }
 
             final String token = authHeader.substring(7);
-
-            // --- BẮT ĐẦU DEBUG SOI LỖI ---
             final String phoneNumber = jwtTokenUtil.extractPhoneNumber(token);
             System.out.println(">>> 1. SĐT LẤY TỪ TOKEN: [" + phoneNumber + "]");
 
             if (phoneNumber != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                // Thử tìm User trong DB
                 User userDetails = (User) userDetailsService.loadUserByUsername(phoneNumber);
-
                 System.out.println(">>> 2. TÌM THẤY USER TRONG DB: " + userDetails.getFullName());
                 System.out.println(">>> 3. QUYỀN (ROLE) CỦA USER NÀY: " + userDetails.getAuthorities());
-
                 if (jwtTokenUtil.validateToken(token, userDetails)) {
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             userDetails,
                             null,
-                            userDetails.getAuthorities() // <--- Quan trọng
+                            userDetails.getAuthorities() 
                     );
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
@@ -70,9 +65,8 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                 }
             }
         } catch (Exception e) {
-            // In lỗi chi tiết ra
             System.err.println(">>> LỖI CHẾT NGƯỜI Ở FILTER: " + e.getMessage());
-            e.printStackTrace(); // In toàn bộ vết lỗi
+            e.printStackTrace(); 
         }
 
         filterChain.doFilter(request, response);

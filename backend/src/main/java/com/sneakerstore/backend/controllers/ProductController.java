@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 public class ProductController {
 
     private final ProductService productService;
+
     @PostMapping("")
     public ResponseEntity<?> createProduct(@RequestBody ProductDTO productDTO) throws Exception {
         Product newProduct = productService.createProduct(productDTO);
@@ -27,32 +28,32 @@ public class ProductController {
     @GetMapping("")
     public ResponseEntity<?> getAllProducts(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int limit
-    ) {
+            @RequestParam(defaultValue = "10") int limit) {
         PageRequest pageRequest = PageRequest.of(page, limit, Sort.by("createdAt").descending());
         Page<Product> productPage = productService.getAllProducts(pageRequest);
-        return ResponseEntity.ok(productPage.getContent());
+        return ResponseEntity.ok(productPage);
     }
 
     @GetMapping("/{id}")
     public EntityModel<Product> getProductById(@PathVariable Long id) throws Exception {
         Product product = productService.getProductById(id);
+
         return EntityModel.of(product,
-            WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getProductById(id)).withSelfRel(),
-            WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getAllProducts(0, 10)).withRel("list-products")
-        );
+                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getProductById(id))
+                        .withSelfRel(),
+                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getAllProducts(0, 10))
+                        .withRel("list-products"));
     }
-    
+
     @GetMapping("/search")
     public ResponseEntity<?> searchProducts(
-            @RequestParam String keyword,
+            @RequestParam(defaultValue = "") String keyword, 
             @RequestParam(defaultValue = "0") Float minPrice,
             @RequestParam(defaultValue = "100000000") Float maxPrice,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int limit
-    ) {
+            @RequestParam(defaultValue = "10") int limit) {
         PageRequest pageRequest = PageRequest.of(page, limit);
         Page<Product> result = productService.searchProducts(keyword, minPrice, maxPrice, pageRequest);
-        return ResponseEntity.ok(result.getContent());
+        return ResponseEntity.ok(result);
     }
 }
