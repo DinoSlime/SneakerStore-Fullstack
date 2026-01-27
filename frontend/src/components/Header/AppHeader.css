@@ -1,6 +1,4 @@
-/* =========================================
-   APP HEADER – SNEAKER BUSINESS STYLE
-========================================= */
+
 
 .app-header {
   height: 72px;
@@ -12,7 +10,6 @@
   z-index: 1000;
 }
 
-/* ================= LOGO ================= */
 .app-header .logo {
   font-size: 22px;
   font-weight: 800;
@@ -26,14 +23,14 @@
   color: #e10600;
 }
 
-/* ================= MENU ================= */
+
 .menu-custom {
   background: transparent;
   border-bottom: none;
   height: 100%;
 }
 
-/* Item */
+
 .menu-custom .ant-menu-item {
   color: #d9d9d9;
   font-weight: 600;
@@ -43,12 +40,12 @@
   transition: all 0.3s ease;
 }
 
-/* Hover */
+
 .menu-custom .ant-menu-item:hover {
   color: #ffffff;
 }
 
-/* Underline */
+
 .menu-custom .ant-menu-item::after {
   content: "";
   position: absolute;
@@ -65,7 +62,7 @@
   opacity: 1;
 }
 
-/* Active */
+
 .menu-custom .ant-menu-item-selected {
   color: #ffffff !important;
 }
@@ -74,12 +71,12 @@
   opacity: 1;
 }
 
-/* Remove default AntD line */
+
 .ant-menu-horizontal > .ant-menu-item::after {
   border-bottom: none !important;
 }
 
-/* ================= CART BUTTON ================= */
+
 .app-header .ant-btn-circle {
   background-color: #1a1a1a;
   border: 1px solid #333;
@@ -99,7 +96,6 @@
   font-weight: 700;
 }
 
-/* ================= USER INFO ================= */
 .header-user-info {
   padding: 6px 10px;
   border-radius: 20px;
@@ -110,17 +106,17 @@
   background-color: rgba(255, 255, 255, 0.08);
 }
 
-/* Username */
+
 .header-user-info .ant-typography {
   color: #ffffff;
 }
 
-/* Avatar */
+
 .ant-avatar {
   border: 2px solid #e10600;
 }
 
-/* ================= DROPDOWN ================= */
+
 .user-app-scope .ant-dropdown-menu {
   border-radius: 10px;
   padding: 8px;
@@ -134,7 +130,6 @@
   color: #e10600;
 }
 
-/* ================= LOGIN / REGISTER ================= */
 .app-header .ant-btn {
   font-weight: 600;
 }
@@ -159,23 +154,19 @@
   background-color: #ff1a1a;
   border-color: #ff1a1a;
 }
-/* =========================================
-   FIX ANT DESIGN MENU HOVER (BẮT BUỘC)
-========================================= */
 
-/* Hover */
 .menu-custom.ant-menu-horizontal > .ant-menu-item:hover {
-  background-color: transparent !important; /* bỏ nền sáng AntD */
-  color: #e10600 !important;               /* đỏ giống logo */
+  background-color: transparent !important; 
+  color: #e10600 !important;               
 }
 
-/* Active (khi click giữ trạng thái) */
+
 .menu-custom.ant-menu-horizontal > .ant-menu-item-active {
   background-color: transparent !important;
   color: #e10600 !important;
 }
 
-/* Selected */
+
 .menu-custom.ant-menu-horizontal > .ant-menu-item-selected {
   background-color: transparent !important;
   color: #e10600 !important;

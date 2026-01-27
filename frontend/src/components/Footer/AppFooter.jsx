@@ -1,18 +1,18 @@
 import React from 'react';
 import { Layout, Row, Col, Typography } from 'antd';
-import './AppFooter.css'; // Import style riêng
+import './AppFooter.css'; 
 
 const { Footer } = Layout;
 const { Title, Text } = Typography;
 
 const AppFooter = () => {
     return (
-        // Dùng class 'text-center' từ global.css
+        
         <Footer className="app-footer text-center">
-            <div className="container"> {/* Dùng class container để giới hạn chiều rộng nếu cần */}
+            <div className="container"> 
                 <Row justify="center" gutter={[32, 32]}>
                     <Col xs={24} md={8}>
-                        {/* Dùng class 'text-white' từ global */}
+                        
                         <Title level={4} className="text-white">SneakerStore</Title>
                         <Text className="footer-text">Uy tín tạo nên thương hiệu. Chuyên cung cấp giày chính hãng.</Text>
                     </Col>

@@ -3,6 +3,7 @@ import { Table, Button, message, Modal, Form, Input, Space, Popconfirm } from 'a
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
 import categoryService from '../../../services/categoryService';
 
+
 const CategoryManager = () => {
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(false);

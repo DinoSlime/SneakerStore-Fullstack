@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Typography, Carousel, Row, Col, Card, message, Spin } from 'antd';
-import { RocketOutlined, SafetyCertificateOutlined, CustomerServiceOutlined, ShoppingCartOutlined } from '@ant-design/icons';
+import { Button, Typography, Carousel, Row, Col, Spin, message } from 'antd';
+import { RocketOutlined, SafetyCertificateOutlined, CustomerServiceOutlined } from '@ant-design/icons';
 import productService from '../../services/productService';
+import ProductCard from '../../components/ProductCard/index';
 import './HomePage.css';
 
 const { Title, Text } = Typography;
-const { Meta } = Card;
 
-// --- 1. CONSTANTS & CONFIG ---
-const FALLBACK_IMAGE = "https://via.placeholder.com/300x300?text=No+Image";
+// --- CONSTANTS ---
 const BANNER_IMAGE = "https://images.unsplash.com/photo-1556906781-9a412961d289?auto=format&fit=crop&w=1600&q=80";
 
 const SERVICE_ITEMS = [
@@ -17,40 +16,6 @@ const SERVICE_ITEMS = [
     { id: 3, icon: <CustomerServiceOutlined />, title: "Hỗ Trợ 24/7", desc: "Luôn sẵn sàng giải đáp" },
 ];
 
-// --- 2. HELPER FUNCTIONS ---
-const formatPrice = (price) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
-};
-
-// --- 3. SUB-COMPONENTS ---
-const ProductCard = ({ product }) => (
-    <Card
-        hoverable
-        className="cursor-pointer product-card-hover"
-        cover={
-            <img 
-                alt={product.name} 
-                src={product.thumbnail || FALLBACK_IMAGE} 
-                className="product-img" 
-            />
-        }
-        actions={[
-            <ShoppingCartOutlined key="cart" onClick={() => message.success('Đã thêm vào giỏ hàng!')} />,
-            <Button type="link" size="small">Xem chi tiết</Button>
-        ]}
-    >
-        <Meta 
-            title={product.name} 
-            description={
-                <Text className="text-danger font-bold" style={{ fontSize: '16px' }}>
-                    {formatPrice(product.price)}
-                </Text>
-            } 
-        />
-    </Card>
-);
-
-// --- 4. MAIN COMPONENT ---
 const HomePage = () => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -62,13 +27,13 @@ const HomePage = () => {
     const fetchProducts = async () => {
         try {
             setLoading(true);
-            // Sử dụng .getAll() đồng bộ với Service
             const res = await productService.getAll();
-            
+            // Xử lý dữ liệu trả về linh hoạt (Page object hoặc Array)
             const data = res.data?.content || res.data || [];
             
             if (Array.isArray(data)) {
-                setProducts(data);
+                // Lấy 8 sản phẩm đầu tiên để hiển thị ở trang chủ cho đẹp
+                setProducts(data.slice(0, 8));
             } else {
                 setProducts([]);
             }
@@ -84,18 +49,19 @@ const HomePage = () => {
         <div className="homepage-content">
             {/* 1. BANNER SECTION */}
             <Carousel autoplay effect="fade">
-                            <div className="banner-wrapper" style={{ backgroundImage: `url('${BANNER_IMAGE}')` }}>
-                {/* Overlay phải có d-flex và căn giữa */}
-                <div className="banner-overlay d-flex flex-column justify-center align-center">
-                    <Title level={1} className="text-white mb-10">BST MÙA HÈ 2026</Title>
-                    <Text className="text-white mb-20" style={{ fontSize: '18px' }}>
-                        Khám phá phong cách mới nhất
-                    </Text>
-                    <Button type="primary" size="large" shape="round" className="font-bold px-20">
-                        MUA NGAY
-                    </Button>
+                <div>
+                    <div className="banner-wrapper" style={{ backgroundImage: `url('${BANNER_IMAGE}')` }}>
+                        <div className="banner-overlay d-flex flex-column justify-center align-center">
+                            <Title level={1} className="text-white mb-10">BST MÙA HÈ 2026</Title>
+                            <Text className="text-white mb-20" style={{ fontSize: '18px' }}>
+                                Khám phá phong cách mới nhất
+                            </Text>
+                            <Button type="primary" size="large" shape="round" className="font-bold px-20">
+                                MUA NGAY
+                            </Button>
+                        </div>
+                    </div>
                 </div>
-            </div>
             </Carousel>
 
             <div className="container py-20">
@@ -118,9 +84,9 @@ const HomePage = () => {
 
                 {loading ? (
                     <div className="text-center py-20">
-                        <Spin size="large" tip="Đang tải sản phẩm...">
-                            <div style={{ padding: '50px' }} />
-                        </Spin>
+                        <Spin tip="Đang tải...">
+                            <div className="content-to-load" />
+                            </Spin>
                     </div>
                 ) : (
                     <Row gutter={[24, 24]}>
@@ -138,7 +104,7 @@ const HomePage = () => {
                     </Row>
                 )}
 
-                <div className="text-center mt-20 mb-20">
+                <div className="text-center mt-40 mb-20">
                      <Button size="large">Xem tất cả sản phẩm</Button>
                 </div>
             </div>
