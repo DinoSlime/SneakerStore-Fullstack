@@ -55,4 +55,24 @@ public class ProductServiceImpl implements ProductService {
         productRepository.deleteById(id);
     }
 }
+@Override
+public Product updateProduct(Long id, ProductDTO productDTO) {
+    Product existingProduct = productRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm có ID: " + id));
+
+    existingProduct.setName(productDTO.getName());
+    existingProduct.setPrice(productDTO.getPrice());
+    existingProduct.setThumbnail(productDTO.getThumbnail());
+    existingProduct.setDescription(productDTO.getDescription());
+
+
+    if (productDTO.getCategoryId() != null) {
+        Category category = categoryRepository.findById(productDTO.getCategoryId())
+                .orElseThrow(() -> new RuntimeException("Danh mục không tồn tại"));
+        existingProduct.setCategory(category);
+    }
+
+    
+    return productRepository.save(existingProduct);
+}
 }

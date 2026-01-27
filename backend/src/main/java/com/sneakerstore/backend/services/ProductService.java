@@ -7,6 +7,7 @@ import org.springframework.data.domain.PageRequest;
 
 public interface ProductService {
     Product createProduct(ProductDTO productDTO) throws Exception;
+    Product updateProduct(Long id, ProductDTO productDTO);
     Product getProductById(long id) throws Exception;
     Page<Product> getAllProducts(PageRequest pageRequest);
     Page<Product> searchProducts(String keyword, Float minPrice, Float maxPrice, PageRequest pageRequest);

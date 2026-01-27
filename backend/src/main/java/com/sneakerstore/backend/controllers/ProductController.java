@@ -47,7 +47,7 @@ public class ProductController {
 
     @GetMapping("/search")
     public ResponseEntity<?> searchProducts(
-            @RequestParam(defaultValue = "") String keyword, 
+            @RequestParam(defaultValue = "") String keyword,
             @RequestParam(defaultValue = "0") Float minPrice,
             @RequestParam(defaultValue = "100000000") Float maxPrice,
             @RequestParam(defaultValue = "0") int page,
@@ -56,9 +56,20 @@ public class ProductController {
         Page<Product> result = productService.searchProducts(keyword, minPrice, maxPrice, pageRequest);
         return ResponseEntity.ok(result);
     }
-    @DeleteMapping("/{id}") 
+
+    @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteProduct(@PathVariable Long id) {
-    productService.deleteProduct(id);
-    return ResponseEntity.ok("Xóa thành công sản phẩm id: " + id);
-}
+        productService.deleteProduct(id);
+        return ResponseEntity.ok("Xóa thành công sản phẩm id: " + id);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateProduct(@PathVariable Long id, @RequestBody ProductDTO productDTO) {
+        try {
+            Product updatedProduct = productService.updateProduct(id, productDTO);
+            return ResponseEntity.ok(updatedProduct);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }
