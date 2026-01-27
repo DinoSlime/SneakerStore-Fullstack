@@ -10,4 +10,5 @@ public interface ProductService {
     Product getProductById(long id) throws Exception;
     Page<Product> getAllProducts(PageRequest pageRequest);
     Page<Product> searchProducts(String keyword, Float minPrice, Float maxPrice, PageRequest pageRequest);
+    void deleteProduct(long id);
 }

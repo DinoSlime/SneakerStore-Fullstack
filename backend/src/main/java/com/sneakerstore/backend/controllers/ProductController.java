@@ -56,4 +56,9 @@ public class ProductController {
         Page<Product> result = productService.searchProducts(keyword, minPrice, maxPrice, pageRequest);
         return ResponseEntity.ok(result);
     }
+    @DeleteMapping("/{id}") 
+    public ResponseEntity<?> deleteProduct(@PathVariable Long id) {
+    productService.deleteProduct(id);
+    return ResponseEntity.ok("Xóa thành công sản phẩm id: " + id);
+}
 }

@@ -49,4 +49,10 @@ public class ProductServiceImpl implements ProductService {
 
         return productRepository.searchProducts(keyword, minPrice, maxPrice, pageRequest);
     }
+    @Override
+    public void deleteProduct(long id) {
+    if(productRepository.existsById(id)) {
+        productRepository.deleteById(id);
+    }
+}
 }

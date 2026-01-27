@@ -30,21 +30,15 @@ const ProductTest = () => {
 
     // --- CÁC HÀM GỌI API ---
 
-    // 1. Lấy danh sách sản phẩm (ĐÃ SỬA)
+    // 1. Lấy danh sách sản phẩm
     const fetchProducts = async () => {
         try { 
-            // Thêm limit để lấy nhiều hơn mặc định
             const res = await axios.get('http://localhost:8080/api/products?page=0&limit=100'); 
-            
-            // 🔥 SỬA QUAN TRỌNG: Backend trả về Page, nên dữ liệu nằm trong .content
-            // Nếu res.data.content tồn tại thì lấy nó, nếu không (trường hợp API cũ) thì lấy res.data
             const list = res.data.content || res.data; 
-            
             if(Array.isArray(list)) {
                 setProducts(list);
             } else {
-                setProducts([]); // Fallback nếu dữ liệu sai định dạng
-                console.error("Dữ liệu nhận được không phải mảng:", res.data);
+                setProducts([]);
             }
             setDetail(null); 
         } catch (err) { 
@@ -58,17 +52,14 @@ const ProductTest = () => {
         try { const res = await axios.get('http://localhost:8080/api/categories'); setCategories(res.data); } catch (err) { console.error('Lỗi Categories: ' + err.message); }
     };
 
-    // 3. Tìm kiếm (ĐÃ SỬA)
+    // 3. Tìm kiếm
     const handleSearch = async () => {
         try { 
             const res = await axios.get(`http://localhost:8080/api/products/search`, { 
                 params: { keyword, minPrice, maxPrice, page: 0, limit: 100 } 
             }); 
-            
-            // 🔥 SỬA QUAN TRỌNG: Tương tự như fetchProducts, phải chọc vào .content
             const list = res.data.content || res.data;
             setProducts(Array.isArray(list) ? list : []);
-            
         } catch (err) { 
             alert('Lỗi Search: ' + err.message); 
         }
@@ -102,6 +93,30 @@ const ProductTest = () => {
     // 7. Đăng ký
     const handleRegister = async () => {
         try { await axios.post('http://localhost:8080/api/users/register', registerData); alert("✅ Đăng ký thành công!"); } catch (err) { alert("❌ Lỗi Register: " + (err.response?.data || err.message)); }
+    };
+
+    // 🔥 8. XÓA SẢN PHẨM (MỚI THÊM)
+    const handleDelete = async (id) => {
+        if (!window.confirm("Bạn có chắc chắn muốn xóa sản phẩm này không?")) return;
+
+        const token = localStorage.getItem("token");
+        if (!token) { alert("⚠️ Chưa đăng nhập! Chỉ Admin mới được xóa."); return; }
+
+        try {
+            await axios.delete(`http://localhost:8080/api/products/${id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            alert("✅ Xóa thành công!");
+            // Cập nhật lại giao diện bằng cách lọc bỏ sản phẩm vừa xóa
+            setProducts(products.filter(p => p.id !== id));
+        } catch (err) {
+            // Kiểm tra lỗi 403 (Không có quyền)
+            if (err.response && err.response.status === 403) {
+                alert("❌ Bạn không có quyền Xóa (Cần Role ADMIN)!");
+            } else {
+                alert("❌ Lỗi Delete: " + (err.response?.data || err.message));
+            }
+        }
     };
 
     // Chạy khi load trang
@@ -184,12 +199,23 @@ const ProductTest = () => {
                 <div style={{ flex: 1, ...cardStyle }}>
                     <h3 style={{ marginTop: 0 }}>📦 Sản phẩm ({products?.length || 0})</h3>
                     <ul style={{ listStyle: 'none', padding: 0 }}>
-                        {/* 🔥 SỬA QUAN TRỌNG: Thêm dấu ? và kiểm tra mảng rỗng để tránh lỗi màn hình trắng */}
                         {products && products.length > 0 ? (
                             products.map(p => (
                                 <li key={p.id} style={{ marginBottom: '10px', padding: '15px', background: '#f9f9f9', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <div><strong style={{fontSize: '1.1em'}}>{p.name}</strong> <span style={{color: 'green'}}>{p.price.toLocaleString()} đ</span></div>
-                                    <button onClick={() => viewDetail(p.id)} style={{ padding: '5px 10px', border: '1px solid #2196F3', color: '#2196F3', borderRadius: '4px', background: 'white', cursor: 'pointer' }}>Chi tiết</button>
+                                    
+                                    {/* 🔥 KHU VỰC NÚT BẤM (ĐÃ SỬA) */}
+                                    <div style={{ display: 'flex', gap: '10px' }}>
+                                        <button onClick={() => viewDetail(p.id)} style={{ padding: '5px 10px', border: '1px solid #2196F3', color: '#2196F3', borderRadius: '4px', background: 'white', cursor: 'pointer' }}>Chi tiết</button>
+                                        
+                                        {/* Nút Xóa mới */}
+                                        <button 
+                                            onClick={() => handleDelete(p.id)} 
+                                            style={{ padding: '5px 10px', border: 'none', borderRadius: '4px', background: '#F44336', color: 'white', cursor: 'pointer' }}
+                                        >
+                                            Xóa
+                                        </button>
+                                    </div>
                                 </li>
                             ))
                         ) : (

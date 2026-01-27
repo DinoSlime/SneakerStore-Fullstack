@@ -1,0 +1,15 @@
+:root {
+  /* 1. Màu sắc chủ đạo */
+  --primary-color: #2f54eb;       /* Màu xanh chính */
+  --secondary-color: #ff4d4f;     /* Màu đỏ (nút xóa/giảm giá) */
+  --text-color: #333333;          /* Màu chữ chính */
+  --bg-color: #f4f6f8;            /* Màu nền web */
+  
+  /* 2. Khoảng cách (Spacing) */
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+
+  /* 3. Bo góc */
+  --border-radius: 8px;
+}
