@@ -1,7 +1,9 @@
 package com.sneakerstore.backend.models;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
+import java.util.List; 
 
 @Entity
 @Table(name = "products")
@@ -19,10 +21,15 @@ public class Product extends BaseEntity {
 
     private String thumbnail;
 
-    @Column(columnDefinition = "TEXT") // Để lưu mô tả dài
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category;
+
+    
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @JsonManagedReference 
+    private List<ProductVariant> variants;
 }

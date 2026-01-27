@@ -2,7 +2,7 @@ package com.sneakerstore.backend.dtos;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
-
+import java.util.List;
 @Data
 @Builder
 @AllArgsConstructor
@@ -19,4 +19,7 @@ public class ProductDTO {
 
     @JsonProperty("category_id")
     private Long categoryId;
+
+    @JsonProperty("variants")
+    private List<ProductVariantDTO> variants;
 }

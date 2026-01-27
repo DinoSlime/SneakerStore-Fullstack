@@ -25,12 +25,9 @@ public class User extends BaseEntity implements UserDetails {
     @Column(name = "fullname", length = 100)
     private String fullName;
 
-    // 1. Thêm trường username (Làm định danh đăng nhập)
     @Column(name = "username", length = 100, nullable = false, unique = true)
     private String username;
 
-    // 2. Vẫn giữ phoneNumber để liên lạc giao hàng (nhưng không bắt buộc phải
-    // unique nếu không dùng để login)
     @Column(name = "phone_number", length = 10, nullable = false)
     private String phoneNumber;
 

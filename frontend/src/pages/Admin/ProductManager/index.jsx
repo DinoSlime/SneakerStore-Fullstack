@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Button, Popconfirm, message, Space, Modal, Form, Input, InputNumber, Select, Tag } from 'antd';
-import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
+import { Table, Button, Popconfirm, message, Space, Modal, Form, Input, InputNumber, Select, Tag, Card, Row, Col, Image, Tooltip } from 'antd';
+import { DeleteOutlined, EditOutlined, PlusOutlined, MinusCircleOutlined } from '@ant-design/icons';
 import productService from '../../../services/productService';
 import categoryService from '../../../services/categoryService';
+import { formatPrice, formatDate, formatDateTime } from '../../../utils/format';
 
 const ProductManager = () => {
     const [products, setProducts] = useState([]);
@@ -10,16 +11,16 @@ const ProductManager = () => {
     const [loading, setLoading] = useState(false);
     
     const [isModalOpen, setIsModalOpen] = useState(false);
-    // MỚI: Biến này để lưu sản phẩm đang được sửa (Nếu null nghĩa là đang thêm mới)
     const [editingProduct, setEditingProduct] = useState(null); 
     
     const [form] = Form.useForm();
+    const [previewImage, setPreviewImage] = useState('');
 
     const fetchData = async () => {
         setLoading(true);
         try {
             const [productRes, categoryRes] = await Promise.all([
-                productService.getAll({ page: 0, limit: 100 }),
+                productService.getAll({ page: 0, limit: 100 }), 
                 categoryService.getAll()
             ]);
             setProducts(productRes.data.content || productRes.data || []);
@@ -35,41 +36,37 @@ const ProductManager = () => {
         fetchData();
     }, []);
 
-    // --- LOGIC XỬ LÝ FORM (DÙNG CHUNG CHO CẢ THÊM VÀ SỬA) ---
+    // --- LOGIC FORM ---
     const handleSubmit = async (values) => {
         try {
             if (editingProduct) {
-                // TRƯỜNG HỢP SỬA: Gọi API update
                 await productService.update(editingProduct.id, values);
                 message.success('Cập nhật thành công!');
             } else {
-                // TRƯỜNG HỢP THÊM: Gọi API create
                 await productService.create(values);
                 message.success('Thêm mới thành công!');
             }
-
-            // Xử lý xong thì đóng modal và reset
-            setIsModalOpen(false);
-            setEditingProduct(null);
-            form.resetFields();
-            fetchData(); // Load lại bảng
+            handleCloseModal();
+            fetchData(); 
         } catch (error) {
-            message.error('Có lỗi xảy ra, vui lòng thử lại!');
+            message.error('Lỗi: ' + (error.response?.data?.message || error.message));
         }
     };
 
-    // Hàm mở Modal ở chế độ Sửa
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+        setEditingProduct(null);
+        setPreviewImage('');
+        form.resetFields();
+    };
+
     const openEditModal = (record) => {
         setIsModalOpen(true);
-        setEditingProduct(record); // Lưu lại sản phẩm đang sửa
+        setEditingProduct(record);
+        setPreviewImage(record.thumbnail); 
         
-        // Đổ dữ liệu cũ vào Form
         form.setFieldsValue({
-            name: record.name,
-            price: record.price,
-            thumbnail: record.thumbnail,
-            description: record.description,
-            // Lưu ý: Backend trả về object category, nhưng form cần category_id
+            ...record,
             category_id: record.category?.id 
         });
     };
@@ -84,29 +81,88 @@ const ProductManager = () => {
         }
     };
 
+    // --- CẤU HÌNH CỘT CHO BẢNG ---
     const columns = [
-        { title: 'ID', dataIndex: 'id', width: 50 },
-        { title: 'Tên', dataIndex: 'name', render: (t) => <strong>{t}</strong> },
-        { title: 'Giá', dataIndex: 'price', render: (p) => <span style={{color:'green'}}>{p?.toLocaleString()} ₫</span> },
+        { title: 'ID', dataIndex: 'id', width: 50, align: 'center' },
+        { 
+            title: 'Ảnh', 
+            dataIndex: 'thumbnail', 
+            width: 80,
+            render: (src) => (
+                <Image 
+                    src={src || "https://placehold.co/50x50?text=NoImg"} 
+                    width={50} 
+                    height={50} 
+                    style={{ objectFit: 'cover', borderRadius: '4px' }}
+                />
+            )
+        },
+        { 
+            title: 'Tên sản phẩm', 
+            dataIndex: 'name', 
+            width: 200,
+            render: (text, record) => (
+                <div>
+                    <strong>{text}</strong>
+                    <div style={{ fontSize: '11px', color: '#888', marginTop: 4 }}>
+                        {record.variants?.map(v => (
+                            <Tag key={v.id} style={{ marginRight: 2, fontSize: '10px' }}>
+                                {v.size}/{v.color} ({v.stock})
+                            </Tag>
+                        ))}
+                    </div>
+                </div>
+            ) 
+        },
+        { 
+            title: 'Giá', 
+            dataIndex: 'price', 
+            width: 100, 
+           
+            render: (p) => <span style={{color:'green', fontWeight: 'bold'}}>{formatPrice(p)}</span> 
+        },
         { 
             title: 'Danh mục', 
             dataIndex: 'category', 
+            width: 120,
             render: (cate) => <Tag color="blue">{cate?.name || '---'}</Tag> 
         },
         {
+            title: 'Mô tả',
+            dataIndex: 'description',
+            width: 150,
+            ellipsis: { showTitle: false },
+            render: (desc) => (
+                <Tooltip placement="topLeft" title={desc}>
+                    {desc || <span style={{color: '#ccc'}}>Chưa có mô tả</span>}
+                </Tooltip>
+            ),
+        },
+        
+        { 
+            title: 'Ngày tạo', 
+            dataIndex: 'createdAt', 
+            width: 110,
+            render: (date) => <span style={{ fontSize: '13px' }}>{formatDateTime(date)}</span>,
+            sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt), 
+        },
+       
+        { 
+            title: 'Cập nhật', 
+            dataIndex: 'updatedAt', 
+            width: 110,
+            render: (date) => <span style={{ fontSize: '13px', color: '#888' }}>{formatDateTime(date)}</span>,
+            sorter: (a, b) => new Date(a.updatedAt) - new Date(b.updatedAt),
+        },
+        {
             title: 'Hành động',
+            width: 100,
+            fixed: 'right', 
             render: (_, record) => (
                 <Space>
-                    {/* Nút Sửa: Gọi hàm openEditModal */}
-                    <Button 
-                        type="primary" 
-                        ghost 
-                        icon={<EditOutlined />} 
-                        onClick={() => openEditModal(record)}
-                    />
-
-                    <Popconfirm title="Bạn có chắc muốn xóa?" onConfirm={() => handleDelete(record.id)} okText="Có" cancelText="Không">
-                        <Button danger icon={<DeleteOutlined />} />
+                    <Button type="primary" ghost size="small" icon={<EditOutlined />} onClick={() => openEditModal(record)} />
+                    <Popconfirm title="Xóa sản phẩm này?" onConfirm={() => handleDelete(record.id)}>
+                        <Button danger size="small" icon={<DeleteOutlined />} />
                     </Popconfirm>
                 </Space>
             ),
@@ -122,11 +178,12 @@ const ProductManager = () => {
                     icon={<PlusOutlined />} 
                     onClick={() => {
                         setIsModalOpen(true);
-                        setEditingProduct(null); // Reset về chế độ Thêm mới
-                        form.resetFields();      // Xóa trắng form cũ nếu có
+                        setEditingProduct(null);
+                        setPreviewImage('');
+                        form.resetFields();
                     }}
                 >
-                    Thêm sản phẩm mới
+                    Thêm mới
                 </Button>
             </div>
 
@@ -136,60 +193,147 @@ const ProductManager = () => {
                 rowKey="id" 
                 loading={loading} 
                 bordered 
-                pagination={{ defaultPageSize: 5, showSizeChanger: true, pageSizeOptions: ['5', '10', '20'] }}
+                scroll={{ x: 1300 }} 
+                pagination={{ defaultPageSize: 5 }}
             />
 
-            {/* MODAL DÙNG CHUNG */}
+           
             <Modal
-                title={editingProduct ? "Chỉnh sửa sản phẩm" : "Thêm sản phẩm mới"} // Tiêu đề đổi theo ngữ cảnh
+                title={editingProduct ? "Chỉnh sửa sản phẩm" : "Thêm sản phẩm mới"}
                 open={isModalOpen}
                 onOk={() => form.submit()}
-                onCancel={() => {
-                    setIsModalOpen(false);
-                    setEditingProduct(null);
-                    form.resetFields();
-                }}
-                okText={editingProduct ? "Cập nhật" : "Lưu lại"}
-                cancelText="Hủy bỏ"
+                onCancel={handleCloseModal}
+                width={900}
+                okText="Lưu lại"
+                cancelText="Hủy"
+                style={{ top: 20 }}
             >
                 <Form form={form} layout="vertical" onFinish={handleSubmit}>
-                    <Form.Item name="name" label="Tên sản phẩm" rules={[{ required: true, message: 'Vui lòng nhập tên!' }]}>
-                        <Input />
-                    </Form.Item>
+                    
+                    
+                    <Card title="Thông tin chung" size="small" style={{ marginBottom: 20 }}>
+                        <Row gutter={16}>
+                            <Col span={16}>
+                                <Row gutter={16}>
+                                    <Col span={12}>
+                                        <Form.Item name="name" label="Tên sản phẩm" rules={[{ required: true }]}>
+                                            <Input placeholder="VD: Nike Air Force 1" />
+                                        </Form.Item>
+                                    </Col>
+                                    <Col span={12}>
+                                        <Form.Item name="category_id" label="Danh mục" rules={[{ required: true }]}>
+                                            <Select placeholder="Chọn danh mục">
+                                                {categories.map((cate) => (
+                                                    <Select.Option key={cate.id} value={cate.id}>{cate.name}</Select.Option>
+                                                ))}
+                                            </Select>
+                                        </Form.Item>
+                                    </Col>
+                                    <Col span={12}>
+                                        <Form.Item name="price" label="Giá bán" rules={[{ required: true }]}>
+                                            <InputNumber 
+                                                style={{ width: '100%' }} 
+                                                formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                            />
+                                        </Form.Item>
+                                    </Col>
+                                    <Col span={12}>
+                                        <Form.Item name="thumbnail" label="Link ảnh đại diện">
+                                            <Input 
+                                                placeholder="https://..." 
+                                                onChange={(e) => setPreviewImage(e.target.value)} 
+                                            />
+                                        </Form.Item>
+                                    </Col>
+                                </Row>
+                            </Col>
+                            
+                            <Col span={8} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                <div style={{ border: '1px dashed #d9d9d9', padding: 8, borderRadius: 8, textAlign: 'center' }}>
+                                    <span style={{ display: 'block', marginBottom: 8, color: '#888' }}>Xem trước ảnh</span>
+                                    <Image 
+                                        width={120} 
+                                        height={120}
+                                        src={previewImage || "https://placehold.co/120x120?text=Preview"} 
+                                        style={{ objectFit: 'contain' }}
+                                    />
+                                </div>
+                            </Col>
 
-                    <Form.Item 
-                        name="price" 
-                        label="Giá bán (VNĐ)" 
-                        rules={[{ required: true, message: 'Nhập giá tiền!' }]}
-                    >
-                        <InputNumber 
-                            style={{ width: '100%' }} 
-                            formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                            parser={(value) => value?.replace(/\$\s?|(,*)/g, '')}
-                        />
-                    </Form.Item>
+                            <Col span={24}>
+                                <Form.Item name="description" label="Mô tả chi tiết">
+                                    <Input.TextArea rows={3} placeholder="Mô tả sản phẩm..." />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+                    </Card>
 
-                    <Form.Item name="thumbnail" label="Hình ảnh (URL)">
-                         <Input />
-                    </Form.Item>
+                    
+                    <Card title="Phân loại hàng (Size/Màu/Tồn kho)" size="small">
+                        <Form.List name="variants">
+                            {(fields, { add, remove }) => (
+                                <>
+                                    {fields.map(({ key, name, ...restField }) => (
+                                        <Row key={key} gutter={8} align="middle" style={{ marginBottom: 8, background: '#fafafa', padding: '8px', borderRadius: '6px', border: '1px solid #f0f0f0' }}>
+                                            <Col span={4}>
+                                                <Form.Item
+                                                    {...restField}
+                                                    name={[name, 'size']}
+                                                    rules={[{ required: true, message: 'Nhập Size' }]}
+                                                    style={{ marginBottom: 0 }}
+                                                    label="Size"
+                                                >
+                                                    <InputNumber style={{ width: '100%' }} />
+                                                </Form.Item>
+                                            </Col>
+                                            <Col span={6}>
+                                                <Form.Item
+                                                    {...restField}
+                                                    name={[name, 'color']}
+                                                    rules={[{ required: true, message: 'Nhập Màu' }]}
+                                                    style={{ marginBottom: 0 }}
+                                                    label="Màu sắc"
+                                                >
+                                                    <Input />
+                                                </Form.Item>
+                                            </Col>
+                                            <Col span={4}>
+                                                <Form.Item
+                                                    {...restField}
+                                                    name={[name, 'stock']}
+                                                    rules={[{ required: true, message: 'Nhập SL' }]}
+                                                    style={{ marginBottom: 0 }}
+                                                    label="Tồn kho"
+                                                >
+                                                    <InputNumber style={{ width: '100%' }} />
+                                                </Form.Item>
+                                            </Col>
+                                            <Col span={8}>
+                                                <Form.Item
+                                                    {...restField}
+                                                    name={[name, 'imageUrl']}
+                                                    style={{ marginBottom: 0 }}
+                                                    label="Link ảnh riêng (nếu có)"
+                                                >
+                                                    <Input placeholder="Để trống lấy ảnh chính" />
+                                                </Form.Item>
+                                            </Col>
+                                            <Col span={2} style={{ textAlign: 'center', paddingTop: '24px' }}>
+                                                <MinusCircleOutlined onClick={() => remove(name)} style={{ color: 'red', fontSize: '18px', cursor: 'pointer' }} />
+                                            </Col>
+                                        </Row>
+                                    ))}
+                                    
+                                    <Form.Item style={{ marginTop: 10 }}>
+                                        <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
+                                            + Thêm phân loại hàng mới
+                                        </Button>
+                                    </Form.Item>
+                                </>
+                            )}
+                        </Form.List>
+                    </Card>
 
-                    <Form.Item 
-                        name="category_id"
-                        label="Danh mục"
-                        rules={[{ required: true, message: 'Chọn danh mục!' }]}
-                    >
-                        <Select placeholder="Chọn danh mục">
-                            {Array.isArray(categories) && categories.map((cate) => (
-                                <Select.Option key={cate.id} value={cate.id}>
-                                    {cate.name}
-                                </Select.Option>
-                            ))}
-                        </Select>
-                    </Form.Item>
-
-                    <Form.Item name="description" label="Mô tả">
-                         <Input.TextArea rows={3} />
-                    </Form.Item>
                 </Form>
             </Modal>
         </div>

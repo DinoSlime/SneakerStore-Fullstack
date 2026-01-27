@@ -21,6 +21,7 @@ public class ProductController {
 
     @PostMapping("")
     public ResponseEntity<?> createProduct(@RequestBody ProductDTO productDTO) throws Exception {
+        
         Product newProduct = productService.createProduct(productDTO);
         return ResponseEntity.ok(newProduct);
     }
@@ -29,6 +30,7 @@ public class ProductController {
     public ResponseEntity<?> getAllProducts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int limit) {
+        
         PageRequest pageRequest = PageRequest.of(page, limit, Sort.by("createdAt").descending());
         Page<Product> productPage = productService.getAllProducts(pageRequest);
         return ResponseEntity.ok(productPage);
@@ -45,15 +47,21 @@ public class ProductController {
                         .withRel("list-products"));
     }
 
+    
     @GetMapping("/search")
     public ResponseEntity<?> searchProducts(
             @RequestParam(defaultValue = "") String keyword,
+            @RequestParam(required = false) Long categoryId, 
             @RequestParam(defaultValue = "0") Float minPrice,
             @RequestParam(defaultValue = "100000000") Float maxPrice,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int limit) {
-        PageRequest pageRequest = PageRequest.of(page, limit);
-        Page<Product> result = productService.searchProducts(keyword, minPrice, maxPrice, pageRequest);
+        
+       
+        PageRequest pageRequest = PageRequest.of(page, limit, Sort.by("createdAt").descending());
+        
+        
+        Page<Product> result = productService.searchProducts(keyword, categoryId, minPrice, maxPrice, pageRequest);
         return ResponseEntity.ok(result);
     }
 

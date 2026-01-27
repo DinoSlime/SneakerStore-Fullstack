@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Table, Button, message, Modal, Form, Input, Space, Popconfirm } from 'antd';
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
 import categoryService from '../../../services/categoryService';
-
+import { formatPrice, formatDate, formatDateTime } from '../../../utils/format';
 
 const CategoryManager = () => {
     const [categories, setCategories] = useState([]);
@@ -69,6 +69,21 @@ const CategoryManager = () => {
             dataIndex: 'name', 
             render: (text) => <strong>{text}</strong>
         },
+        { 
+                    title: 'Ngày tạo', 
+                    dataIndex: 'createdAt', 
+                    width: 110,
+                    render: (date) => <span style={{ fontSize: '13px' }}>{formatDateTime(date)}</span>,
+                    sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt), 
+                },
+                
+                { 
+                    title: 'Cập nhật', 
+                    dataIndex: 'updatedAt', 
+                    width: 110,
+                    render: (date) => <span style={{ fontSize: '13px', color: '#888' }}>{formatDateTime(date)}</span>,
+                    sorter: (a, b) => new Date(a.updatedAt) - new Date(b.updatedAt),
+                },
         {
             title: 'Hành động',
             width: 150,
