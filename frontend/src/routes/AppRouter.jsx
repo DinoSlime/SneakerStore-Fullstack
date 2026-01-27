@@ -1,18 +1,25 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import AdminRouter from './AdminRouter';
-import UserRouter from './UserRouter.jsx';
+import UserRouter from './UserRouter';
+import LoginPage from '../pages/Auth/LoginPage'; // Mới tạo
+import RegisterPage from '../pages/Auth/RegisterPage'; 
+import PrivateRoute from '../components/PrivateRoute'; // Mới tạo
 
 const AppRouter = () => {
     return (
         <Routes>
-            {/* 1. KHU VỰC ADMIN */}
-            {/* Nếu đường dẫn bắt đầu bằng /admin/... thì giao cho AdminRouter xử lý */}
-           
-            <Route path="/admin/*" element={<AdminRouter />} />
+            {/* 1. Route Đăng nhập / Đăng ký (Ai cũng vào được) */}
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
 
-            {/* 2. KHU VỰC USER */}
-            {/* Tất cả các đường dẫn còn lại giao cho UserRouter */}
+            {/* 2. KHU VỰC ADMIN (ĐƯỢC BẢO VỆ) 🔐 */}
+            {/* Bọc Route này bằng PrivateRoute và yêu cầu quyền ADMIN */}
+            <Route element={<PrivateRoute requiredRole="ADMIN" />}>
+                <Route path="/admin/*" element={<AdminRouter />} />
+            </Route>
+
+            {/* 3. KHU VỰC USER (Ai cũng vào được, hoặc nếu cần user login thì bọc PrivateRoute không cần role) */}
             <Route path="/*" element={<UserRouter />} />
         </Routes>
     );

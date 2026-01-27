@@ -7,6 +7,8 @@ import com.sneakerstore.backend.repositories.RoleRepository;
 import com.sneakerstore.backend.repositories.UserRepository;
 import com.sneakerstore.backend.services.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -21,11 +23,18 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User createUser(User user) {
-        if (userRepository.existsByPhoneNumber(user.getPhoneNumber())) {
-            throw new RuntimeException("Số điện thoại đã tồn tại, vui lòng dùng số khác!");
+        // Kiểm tra trùng username
+        if (userRepository.existsByUsername(user.getUsername())) {
+            throw new DataIntegrityViolationException("Tên đăng nhập đã tồn tại, vui lòng chọn tên khác!");
         }
+
+        // Kiểm tra trùng số điện thoại
+        if (userRepository.existsByPhoneNumber(user.getPhoneNumber())) {
+            throw new DataIntegrityViolationException("Số điện thoại đã được đăng ký!");
+        }
+
         Role role = roleRepository.findById(1L)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy quyền USER (Role ID = 1) trong Database"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy quyền USER (Role ID = 1)"));
         user.setRole(role);
 
         if (user.getPassword() != null) {
@@ -37,12 +46,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public String login(String phoneNumber, String password) throws Exception {
-        User user = userRepository.findByPhoneNumber(phoneNumber)
-                .orElseThrow(() -> new Exception("Sai số điện thoại hoặc mật khẩu"));
+    public String login(String username, String password) throws Exception {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new BadCredentialsException("Sai tài khoản hoặc mật khẩu"));
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new Exception("Sai số điện thoại hoặc mật khẩu");
+            throw new BadCredentialsException("Sai tài khoản hoặc mật khẩu");
         }
         
         return jwtTokenUtil.generateToken(user);
@@ -52,5 +61,10 @@ public class UserServiceImpl implements UserService {
     public User getUserById(long id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy User với ID: " + id));
+    }
+    @Override
+    public User getUserDetails(String username) throws Exception {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new Exception("User not found"));
     }
 }

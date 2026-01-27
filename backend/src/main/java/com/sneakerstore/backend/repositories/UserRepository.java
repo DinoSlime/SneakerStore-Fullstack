@@ -8,8 +8,13 @@ import java.util.Optional;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
+    
+    // 1. Kiểm tra xem username đã tồn tại chưa (Dùng khi Đăng Ký)
+    boolean existsByUsername(String username);
 
-    Optional<User> findByPhoneNumber(String phoneNumber);
+    // 2. Tìm User bằng username (Dùng khi Đăng Nhập)
+    Optional<User> findByUsername(String username);
 
-    boolean existsByPhoneNumber(String phoneNumber);
+    // 3. Kiểm tra xem SĐT đã tồn tại chưa (Sửa dòng này lại cho đúng)
+    boolean existsByPhoneNumber(String phoneNumber); 
 }

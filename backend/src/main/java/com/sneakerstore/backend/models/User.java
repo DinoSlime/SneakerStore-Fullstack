@@ -6,6 +6,8 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -18,11 +20,17 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class User extends BaseEntity implements UserDetails { 
+public class User extends BaseEntity implements UserDetails {
 
     @Column(name = "fullname", length = 100)
     private String fullName;
 
+    // 1. Thêm trường username (Làm định danh đăng nhập)
+    @Column(name = "username", length = 100, nullable = false, unique = true)
+    private String username;
+
+    // 2. Vẫn giữ phoneNumber để liên lạc giao hàng (nhưng không bắt buộc phải
+    // unique nếu không dùng để login)
     @Column(name = "phone_number", length = 10, nullable = false)
     private String phoneNumber;
 
@@ -30,6 +38,7 @@ public class User extends BaseEntity implements UserDetails {
     private String address;
 
     @Column(name = "password", length = 200, nullable = false)
+    @JsonIgnore
     private String password;
 
     @Column(name = "is_active")
@@ -55,11 +64,13 @@ public class User extends BaseEntity implements UserDetails {
         return authorityList;
     }
 
+    // 3. Sửa lại hàm này: Trả về username thay vì phoneNumber
     @Override
     public String getUsername() {
-        return phoneNumber;
+        return username;
     }
 
+    // Các hàm dưới giữ nguyên
     @Override
     public boolean isAccountNonExpired() {
         return true;
