@@ -53,6 +53,11 @@ const AdminLayout = () => {
                             label: 'Quản lý Sản phẩm',
                         },
                         {
+                            key: '/admin/categories', 
+                            icon: <OrderedListOutlined />, 
+                            label: 'Quản lý Danh mục',
+                        },
+                        {
                             key: '/admin/orders',
                             icon: <OrderedListOutlined />,
                             label: 'Quản lý Đơn hàng',
