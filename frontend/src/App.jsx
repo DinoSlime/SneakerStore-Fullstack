@@ -1,20 +1,12 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
-import MainLayout from './layouts/MainLayout'; 
-import HomePage from './pages/HomePage';       
-import './assets/styles/global.css';
+import AppRouter from './routes/AppRouter'; // Import cái file vừa tạo
+
 function App() {
+  // App.jsx giờ chỉ làm đúng 1 việc: Gọi Router ra
   return (
-    <Routes>
-      
-      
-      <Route path="/" element={<MainLayout />}>
-        <Route index element={<HomePage />} />
-      </Route>
-
-
-    
-    </Routes>
+    <div className="App">
+       <AppRouter />
+    </div>
   );
 }
 
