@@ -25,6 +25,7 @@ const productService = {
     delete: (id) => {
         return axiosClient.delete(`/products/${id}`);
     }
+    
 };
 
 export default productService;

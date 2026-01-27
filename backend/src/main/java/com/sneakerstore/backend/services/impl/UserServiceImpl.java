@@ -9,6 +9,7 @@ import com.sneakerstore.backend.services.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException; // Thêm import này
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -23,20 +24,27 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User createUser(User user) {
-        // Kiểm tra trùng username
+        // 1. Kiểm tra trùng username
         if (userRepository.existsByUsername(user.getUsername())) {
             throw new DataIntegrityViolationException("Tên đăng nhập đã tồn tại, vui lòng chọn tên khác!");
         }
 
-        // Kiểm tra trùng số điện thoại
+        // 2. Kiểm tra trùng số điện thoại (Bắt buộc riêng biệt)
         if (userRepository.existsByPhoneNumber(user.getPhoneNumber())) {
-            throw new DataIntegrityViolationException("Số điện thoại đã được đăng ký!");
+            throw new DataIntegrityViolationException("Số điện thoại này đã được đăng ký!");
         }
 
+        // 3. Gán quyền (Role)
+        // ⚠️ LƯU Ý: Hãy chắc chắn Role ID 1 trong Database là "USER".
+        // Nếu ID 1 là Admin thì toang! Tốt nhất nên check DB trước.
         Role role = roleRepository.findById(1L)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy quyền USER (Role ID = 1)"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy quyền mặc định (Role ID = 1)"));
         user.setRole(role);
 
+        // 4. Mặc định tài khoản mới tạo sẽ hoạt động luôn
+        user.setActive(true);
+
+        // 5. Mã hóa mật khẩu
         if (user.getPassword() != null) {
             String encodedPassword = passwordEncoder.encode(user.getPassword());
             user.setPassword(encodedPassword);
@@ -47,13 +55,21 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public String login(String username, String password) throws Exception {
+        // 1. Tìm user theo username
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new BadCredentialsException("Sai tài khoản hoặc mật khẩu"));
 
+        // 2. Kiểm tra mật khẩu
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new BadCredentialsException("Sai tài khoản hoặc mật khẩu");
         }
-        
+
+        // 3. 👇 QUAN TRỌNG: Kiểm tra xem tài khoản có bị khóa không?
+        if (!user.isActive()) {
+            throw new DisabledException("Tài khoản của bạn đã bị khóa. Vui lòng liên hệ Admin.");
+        }
+
+        // 4. Sinh Token
         return jwtTokenUtil.generateToken(user);
     }
 
@@ -62,6 +78,7 @@ public class UserServiceImpl implements UserService {
         return userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy User với ID: " + id));
     }
+
     @Override
     public User getUserDetails(String username) throws Exception {
         return userRepository.findByUsername(username)

@@ -44,13 +44,18 @@ public class JwtTokenFilter extends OncePerRequestFilter {
             }
 
             final String token = authHeader.substring(7);
-            final String phoneNumber = jwtTokenUtil.extractPhoneNumber(token);
-            System.out.println(">>> 1. SĐT LẤY TỪ TOKEN: [" + phoneNumber + "]");
+            
+            // 👇 1. Sửa thành extractUsername (Vì ta đã đổi Subject trong JwtTokenUtil)
+            final String username = jwtTokenUtil.extractUsername(token); 
+            System.out.println(">>> 1. USERNAME LẤY TỪ TOKEN: [" + username + "]");
 
-            if (phoneNumber != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                User userDetails = (User) userDetailsService.loadUserByUsername(phoneNumber);
-                System.out.println(">>> 2. TÌM THẤY USER TRONG DB: " + userDetails.getFullName());
+            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                // 👇 2. Tìm User bằng Username (Lúc này DB sẽ tìm đúng cột Username chữ)
+                User userDetails = (User) userDetailsService.loadUserByUsername(username);
+                
+                System.out.println(">>> 2. TÌM THẤY USER TRONG DB: " + userDetails.getUsername());
                 System.out.println(">>> 3. QUYỀN (ROLE) CỦA USER NÀY: " + userDetails.getAuthorities());
+
                 if (jwtTokenUtil.validateToken(token, userDetails)) {
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             userDetails,
@@ -59,14 +64,13 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                     );
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
-                    System.out.println(">>> 4. XÁC THỰC THÀNH CÔNG! ĐÃ CHO QUA CỬA.");
+                    System.out.println(">>> 4. XÁC THỰC THÀNH CÔNG! QUYỀN " + userDetails.getRole().getName() + " ĐÃ ĐƯỢC CHẤP NHẬN.");
                 } else {
                     System.out.println(">>> X. TOKEN KHÔNG HỢP LỆ VỚI USER NÀY!");
                 }
             }
         } catch (Exception e) {
-            System.err.println(">>> LỖI CHẾT NGƯỜI Ở FILTER: " + e.getMessage());
-            e.printStackTrace(); 
+            System.err.println(">>> LỖI Ở FILTER: " + e.getMessage());
         }
 
         filterChain.doFilter(request, response);
@@ -79,8 +83,10 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                 Pair.of("/api/users/register", "POST"),
                 Pair.of("/api/users/login", "POST"),
                 Pair.of("/api/images", "GET"));
+        
         String requestPath = request.getServletPath();
         String requestMethod = request.getMethod();
+
         for (Pair<String, String> bypassToken : bypassTokens) {
             if (requestPath.contains(bypassToken.getFirst()) && requestMethod.equals(bypassToken.getSecond())) {
                 return true;
