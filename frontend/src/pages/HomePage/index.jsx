@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Button, Typography, Carousel, Row, Col, Spin, message } from 'antd';
 import { RocketOutlined, SafetyCertificateOutlined, CustomerServiceOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom'; // 1. Import useNavigate
 import productService from '../../services/productService';
 import ProductCard from '../../components/ProductCard/index';
 import './HomePage.css';
@@ -19,6 +20,10 @@ const SERVICE_ITEMS = [
 const HomePage = () => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
+    const navigate = useNavigate(); // 2. Khởi tạo navigate
+
+    // 3. Tạo Ref để làm "mỏ neo" cho phần Sản phẩm mới
+    const newProductsRef = useRef(null);
 
     useEffect(() => {
         fetchProducts();
@@ -28,11 +33,10 @@ const HomePage = () => {
         try {
             setLoading(true);
             const res = await productService.getAll();
-            // Xử lý dữ liệu trả về linh hoạt (Page object hoặc Array)
             const data = res.data?.content || res.data || [];
             
             if (Array.isArray(data)) {
-                // Lấy 8 sản phẩm đầu tiên để hiển thị ở trang chủ cho đẹp
+                // Lấy 8 sản phẩm đầu tiên để hiển thị ở trang chủ
                 setProducts(data.slice(0, 8));
             } else {
                 setProducts([]);
@@ -42,6 +46,16 @@ const HomePage = () => {
             message.error("Không thể tải danh sách sản phẩm");
         } finally {
             setLoading(false);
+        }
+    };
+
+    // 4. Hàm xử lý cuộn trang mượt mà
+    const scrollToNewProducts = () => {
+        if (newProductsRef.current) {
+            newProductsRef.current.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'start' 
+            });
         }
     };
 
@@ -56,9 +70,17 @@ const HomePage = () => {
                             <Text className="text-white mb-20" style={{ fontSize: '18px' }}>
                                 Khám phá phong cách mới nhất
                             </Text>
-                            <Button type="primary" size="large" shape="round" className="font-bold px-20">
-                                MUA NGAY
-                            </Button>
+                            <div className="d-flex gap-sm">
+                                <Button 
+                                    type="primary" 
+                                    size="large" 
+                                    shape="round" 
+                                    className="font-bold px-20"
+                                    onClick={scrollToNewProducts} // Cuộn xuống khi click
+                                >
+                                    SẢN PHẨM MỚI
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -77,7 +99,12 @@ const HomePage = () => {
                 </Row>
 
                 {/* 3. PRODUCTS SECTION */}
-                <div className="text-center mb-40">
+                <div 
+                    className="text-center mb-40" 
+                    ref={newProductsRef} 
+                    id="new-arrivals-section"
+                    style={{ paddingTop: '20px' }} 
+                >
                     <Title level={2}>Sản Phẩm Mới Nhất</Title>
                     <div style={{ width: '60px', height: '4px', background: 'var(--primary-color)', margin: '0 auto' }}></div>
                 </div>
@@ -86,7 +113,7 @@ const HomePage = () => {
                     <div className="text-center py-20">
                         <Spin tip="Đang tải...">
                             <div className="content-to-load" />
-                            </Spin>
+                        </Spin>
                     </div>
                 ) : (
                     <Row gutter={[24, 24]}>
@@ -104,8 +131,16 @@ const HomePage = () => {
                     </Row>
                 )}
 
+                {/* 5. Nút Xem tất cả sản phẩm điều hướng sang trang /products */}
                 <div className="text-center mt-40 mb-20">
-                     <Button size="large">Xem tất cả sản phẩm</Button>
+                     <Button 
+                        size="large" 
+                        type="default" 
+                        onClick={() => navigate('/products')} // Chuyển hướng trang
+                        style={{ borderRadius: '8px', padding: '0 40px', fontWeight: 'bold' }}
+                     >
+                        Xem tất cả sản phẩm
+                     </Button>
                 </div>
             </div>
         </div>

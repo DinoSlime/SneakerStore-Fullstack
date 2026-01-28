@@ -7,6 +7,7 @@ import CartPage from '../pages/CartPage/CartPage';
 import CheckoutPage from '../pages/Checkout/CheckoutPage';
 import OrderHistoryPage from '../pages/Order/OrderHistoryPage';
 import OrderDetailPage from '../pages/Order/OrderDetailPage';
+import ProductListPage from '../pages/ProductList/ProductListPage';
 const UserRouter = () => {
     return (
         <Routes>
@@ -19,6 +20,7 @@ const UserRouter = () => {
                <Route path="/cart" element={<CartPage />} />
                <Route path="/orders" element={<OrderHistoryPage />} />
                 <Route path="/order/:id" element={<OrderDetailPage />} />
+                <Route path="/products" element={<ProductListPage />} />
             </Route>
         </Routes>
     );

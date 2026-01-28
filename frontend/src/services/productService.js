@@ -5,6 +5,7 @@ const productService = {
     getAll: (params) => {
         return axiosClient.get('/products', { params });
     },
+    
 
     // Lấy chi tiết 1 sản phẩm (Để sửa)
     getById: (id) => {
