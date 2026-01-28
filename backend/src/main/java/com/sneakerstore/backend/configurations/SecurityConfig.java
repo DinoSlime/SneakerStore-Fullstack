@@ -39,6 +39,14 @@ public class SecurityConfig {
 
                         // Xem ảnh sản phẩm (Rất quan trọng để hiển thị frontend)
                         .requestMatchers(HttpMethod.GET, "/api/products/images/**", "/api/images/**").permitAll()
+                        
+                        // 👇 MỞ QUYỀN XEM ẢNH TRONG THƯ MỤC UPLOAD
+                        .requestMatchers("/images/**").permitAll()
+
+                        // 👇 CẤU HÌNH API UPLOAD (QUAN TRỌNG)
+                        // Nếu muốn ai cũng upload được (để test): .permitAll()
+                        // Nếu chỉ Admin được upload: .hasRole("ADMIN")
+                        .requestMatchers("/api/upload/**").permitAll()
 
                         // Quản lý Category (Thêm, Sửa, Xóa)
                         .requestMatchers(HttpMethod.POST, "/api/categories/**").hasRole("ADMIN")
@@ -51,12 +59,13 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/products/**").hasRole("ADMIN")
 
                         // Quản lý Đơn hàng (Dành riêng cho Admin)
-                        // Xem tất cả đơn, cập nhật trạng thái
-                        .requestMatchers("/api/orders/**").hasRole("ADMIN")
+                        .requestMatchers("/api/orders/get-all-orders").hasRole("ADMIN") // Cụ thể hoá API admin
+                        .requestMatchers("/api/orders/update-status/**").hasRole("ADMIN")
 
                         // Đặt hàng (POST)
                         .requestMatchers(HttpMethod.POST, "/api/orders/**").authenticated()
                         .requestMatchers("/api/payment/**").authenticated()
+                        
                         // Xem lịch sử đơn hàng, chi tiết đơn hàng (GET)
                         .requestMatchers(HttpMethod.GET, "/api/orders/**").authenticated()
 
@@ -74,10 +83,12 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
+        // Cho phép cả localhost:5173 (Vite) và 3000 (Create React App)
         configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS")); // Cho phép đủ các
-                                                                                                   // method
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "x-auth-token"));
+        // Cho phép tất cả các method quan trọng, bao gồm OPTIONS (cho preflight check của CORS)
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD")); 
+        // Cho phép tất cả header để tránh lỗi thiếu header
+        configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setExposedHeaders(List.of("x-auth-token"));
         configuration.setAllowCredentials(true);
 

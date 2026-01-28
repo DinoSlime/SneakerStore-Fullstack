@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Button, Popconfirm, message, Space, Modal, Form, Input, InputNumber, Select, Tag, Card, Row, Col, Image, Tooltip } from 'antd';
-import { DeleteOutlined, EditOutlined, PlusOutlined, MinusCircleOutlined } from '@ant-design/icons';
+import { Table, Button, Popconfirm, message, Space, Modal, Form, Input, InputNumber, Select, Tag, Card, Row, Col, Image, Tooltip, Upload } from 'antd';
+import { DeleteOutlined, EditOutlined, PlusOutlined, MinusCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import productService from '../../../services/productService';
 import categoryService from '../../../services/categoryService';
-import { formatPrice, formatDate, formatDateTime } from '../../../utils/format';
+import { formatPrice, formatDateTime } from '../../../utils/format';
+
+// 👇 URL API Upload (Adjust port if your backend is not 8080)
+const UPLOAD_API_URL = 'http://localhost:8080/api/upload/image'; 
 
 const ProductManager = () => {
     const [products, setProducts] = useState([]);
@@ -15,6 +18,9 @@ const ProductManager = () => {
     
     const [form] = Form.useForm();
     const [previewImage, setPreviewImage] = useState('');
+    
+    // 👇 State to manage upload loading status
+    const [uploading, setUploading] = useState(false);
 
     const fetchData = async () => {
         setLoading(true);
@@ -35,6 +41,36 @@ const ProductManager = () => {
     useEffect(() => {
         fetchData();
     }, []);
+
+    // --- LOGIC UPLOAD IMAGE ---
+    const handleUploadChange = (info) => {
+        if (info.file.status === 'uploading') {
+            setUploading(true);
+            return;
+        }
+        if (info.file.status === 'done') {
+            const url = info.file.response.url; 
+            setPreviewImage(url);
+            setUploading(false);
+            form.setFieldsValue({ thumbnail: url });
+            message.success('Upload ảnh thành công!');
+        } else if (info.file.status === 'error') {
+            setUploading(false);
+            message.error('Upload thất bại.');
+        }
+    };
+
+    const beforeUpload = (file) => {
+        const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png';
+        if (!isJpgOrPng) {
+            message.error('Bạn chỉ có thể upload file JPG/PNG!');
+        }
+        const isLt2M = file.size / 1024 / 1024 < 5; 
+        if (!isLt2M) {
+            message.error('Ảnh phải nhỏ hơn 5MB!');
+        }
+        return isJpgOrPng && isLt2M;
+    };
 
     // --- LOGIC FORM ---
     const handleSubmit = async (values) => {
@@ -57,6 +93,7 @@ const ProductManager = () => {
         setIsModalOpen(false);
         setEditingProduct(null);
         setPreviewImage('');
+        setUploading(false);
         form.resetFields();
     };
 
@@ -81,7 +118,7 @@ const ProductManager = () => {
         }
     };
 
-    // --- CẤU HÌNH CỘT CHO BẢNG ---
+    // --- TABLE COLUMNS ---
     const columns = [
         { title: 'ID', dataIndex: 'id', width: 50, align: 'center' },
         { 
@@ -118,7 +155,6 @@ const ProductManager = () => {
             title: 'Giá', 
             dataIndex: 'price', 
             width: 100, 
-           
             render: (p) => <span style={{color:'green', fontWeight: 'bold'}}>{formatPrice(p)}</span> 
         },
         { 
@@ -138,21 +174,12 @@ const ProductManager = () => {
                 </Tooltip>
             ),
         },
-        
         { 
             title: 'Ngày tạo', 
             dataIndex: 'createdAt', 
             width: 110,
             render: (date) => <span style={{ fontSize: '13px' }}>{formatDateTime(date)}</span>,
             sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt), 
-        },
-       
-        { 
-            title: 'Cập nhật', 
-            dataIndex: 'updatedAt', 
-            width: 110,
-            render: (date) => <span style={{ fontSize: '13px', color: '#888' }}>{formatDateTime(date)}</span>,
-            sorter: (a, b) => new Date(a.updatedAt) - new Date(b.updatedAt),
         },
         {
             title: 'Hành động',
@@ -169,6 +196,13 @@ const ProductManager = () => {
         },
     ];
 
+    const uploadButton = (
+        <div>
+            {uploading ? <LoadingOutlined /> : <PlusOutlined />}
+            <div style={{ marginTop: 8 }}>Tải ảnh lên</div>
+        </div>
+    );
+
     return (
         <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
@@ -180,6 +214,7 @@ const ProductManager = () => {
                         setIsModalOpen(true);
                         setEditingProduct(null);
                         setPreviewImage('');
+                        setUploading(false);
                         form.resetFields();
                     }}
                 >
@@ -197,7 +232,6 @@ const ProductManager = () => {
                 pagination={{ defaultPageSize: 5 }}
             />
 
-           
             <Modal
                 title={editingProduct ? "Chỉnh sửa sản phẩm" : "Thêm sản phẩm mới"}
                 open={isModalOpen}
@@ -210,18 +244,19 @@ const ProductManager = () => {
             >
                 <Form form={form} layout="vertical" onFinish={handleSubmit}>
                     
-                    
                     <Card title="Thông tin chung" size="small" style={{ marginBottom: 20 }}>
                         <Row gutter={16}>
                             <Col span={16}>
                                 <Row gutter={16}>
                                     <Col span={12}>
-                                        <Form.Item name="name" label="Tên sản phẩm" rules={[{ required: true }]}>
+                                        {/* 👇 Đã thêm message lỗi tiếng Việt */}
+                                        <Form.Item name="name" label="Tên sản phẩm" rules={[{ required: true, message: 'Vui lòng nhập tên sản phẩm!' }]}>
                                             <Input placeholder="VD: Nike Air Force 1" />
                                         </Form.Item>
                                     </Col>
                                     <Col span={12}>
-                                        <Form.Item name="category_id" label="Danh mục" rules={[{ required: true }]}>
+                                        {/* 👇 Đã thêm message lỗi tiếng Việt */}
+                                        <Form.Item name="category_id" label="Danh mục" rules={[{ required: true, message: 'Vui lòng chọn danh mục!' }]}>
                                             <Select placeholder="Chọn danh mục">
                                                 {categories.map((cate) => (
                                                     <Select.Option key={cate.id} value={cate.id}>{cate.name}</Select.Option>
@@ -230,19 +265,47 @@ const ProductManager = () => {
                                         </Form.Item>
                                     </Col>
                                     <Col span={12}>
-                                        <Form.Item name="price" label="Giá bán" rules={[{ required: true }]}>
+                                        {/* 👇 Đã thêm message lỗi tiếng Việt */}
+                                        <Form.Item name="price" label="Giá bán" rules={[{ required: true, message: 'Vui lòng nhập giá bán!' }]}>
                                             <InputNumber 
                                                 style={{ width: '100%' }} 
                                                 formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                                             />
                                         </Form.Item>
                                     </Col>
+                                    
                                     <Col span={12}>
-                                        <Form.Item name="thumbnail" label="Link ảnh đại diện">
-                                            <Input 
-                                                placeholder="https://..." 
-                                                onChange={(e) => setPreviewImage(e.target.value)} 
-                                            />
+                                        <Form.Item 
+                                            label="Ảnh đại diện"
+                                        >
+                                            <Form.Item name="thumbnail" noStyle>
+                                                <Input type="hidden" />
+                                            </Form.Item>
+
+                                            <Upload
+                                                name="file"
+                                                listType="picture-card"
+                                                className="avatar-uploader"
+                                                showUploadList={false}
+                                                action={UPLOAD_API_URL}
+                                                beforeUpload={beforeUpload}
+                                                onChange={handleUploadChange}
+                                            >
+                                                {previewImage ? (
+                                                    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                                                        <img src={previewImage} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                                                        <div style={{ 
+                                                            position: 'absolute', bottom: 0, width: '100%', 
+                                                            background: 'rgba(0,0,0,0.5)', color: '#fff', 
+                                                            textAlign: 'center', fontSize: '10px' 
+                                                        }}>
+                                                            Đổi ảnh
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    uploadButton
+                                                )}
+                                            </Upload>
                                         </Form.Item>
                                     </Col>
                                 </Row>
@@ -250,11 +313,11 @@ const ProductManager = () => {
                             
                             <Col span={8} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                                 <div style={{ border: '1px dashed #d9d9d9', padding: 8, borderRadius: 8, textAlign: 'center' }}>
-                                    <span style={{ display: 'block', marginBottom: 8, color: '#888' }}>Xem trước ảnh</span>
+                                    <span style={{ display: 'block', marginBottom: 8, color: '#888' }}>Xem trước ảnh lớn</span>
                                     <Image 
-                                        width={120} 
-                                        height={120}
-                                        src={previewImage || "https://placehold.co/120x120?text=Preview"} 
+                                        width={150} 
+                                        height={150}
+                                        src={previewImage || "https://placehold.co/150x150?text=No+Image"} 
                                         style={{ objectFit: 'contain' }}
                                     />
                                 </div>
@@ -268,7 +331,6 @@ const ProductManager = () => {
                         </Row>
                     </Card>
 
-                    
                     <Card title="Phân loại hàng (Size/Màu/Tồn kho)" size="small">
                         <Form.List name="variants">
                             {(fields, { add, remove }) => (
@@ -276,45 +338,25 @@ const ProductManager = () => {
                                     {fields.map(({ key, name, ...restField }) => (
                                         <Row key={key} gutter={8} align="middle" style={{ marginBottom: 8, background: '#fafafa', padding: '8px', borderRadius: '6px', border: '1px solid #f0f0f0' }}>
                                             <Col span={4}>
-                                                <Form.Item
-                                                    {...restField}
-                                                    name={[name, 'size']}
-                                                    rules={[{ required: true, message: 'Nhập Size' }]}
-                                                    style={{ marginBottom: 0 }}
-                                                    label="Size"
-                                                >
+                                                {/* 👇 Đã sửa message */}
+                                                <Form.Item {...restField} name={[name, 'size']} rules={[{ required: true, message: 'Vui lòng nhập Size!' }]} style={{ marginBottom: 0 }} label="Size">
                                                     <InputNumber style={{ width: '100%' }} />
                                                 </Form.Item>
                                             </Col>
                                             <Col span={6}>
-                                                <Form.Item
-                                                    {...restField}
-                                                    name={[name, 'color']}
-                                                    rules={[{ required: true, message: 'Nhập Màu' }]}
-                                                    style={{ marginBottom: 0 }}
-                                                    label="Màu sắc"
-                                                >
+                                                {/* 👇 Đã sửa message */}
+                                                <Form.Item {...restField} name={[name, 'color']} rules={[{ required: true, message: 'Vui lòng nhập Màu!' }]} style={{ marginBottom: 0 }} label="Màu sắc">
                                                     <Input />
                                                 </Form.Item>
                                             </Col>
                                             <Col span={4}>
-                                                <Form.Item
-                                                    {...restField}
-                                                    name={[name, 'stock']}
-                                                    rules={[{ required: true, message: 'Nhập SL' }]}
-                                                    style={{ marginBottom: 0 }}
-                                                    label="Tồn kho"
-                                                >
+                                                {/* 👇 Đã sửa message */}
+                                                <Form.Item {...restField} name={[name, 'stock']} rules={[{ required: true, message: 'Vui lòng nhập SL!' }]} style={{ marginBottom: 0 }} label="Tồn kho">
                                                     <InputNumber style={{ width: '100%' }} />
                                                 </Form.Item>
                                             </Col>
                                             <Col span={8}>
-                                                <Form.Item
-                                                    {...restField}
-                                                    name={[name, 'imageUrl']}
-                                                    style={{ marginBottom: 0 }}
-                                                    label="Link ảnh riêng (nếu có)"
-                                                >
+                                                <Form.Item {...restField} name={[name, 'imageUrl']} style={{ marginBottom: 0 }} label="Link ảnh riêng (nếu có)">
                                                     <Input placeholder="Để trống lấy ảnh chính" />
                                                 </Form.Item>
                                             </Col>
@@ -326,7 +368,7 @@ const ProductManager = () => {
                                     
                                     <Form.Item style={{ marginTop: 10 }}>
                                         <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
-                                             Thêm phân loại hàng mới
+                                            Thêm phân loại hàng mới
                                         </Button>
                                     </Form.Item>
                                 </>
