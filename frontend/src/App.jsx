@@ -1,14 +1,17 @@
 import React from 'react';
 import AppRouter from './routes/AppRouter';
-import { AuthProvider } from './context/AuthContext'; 
+import { AuthProvider } from './context/AuthContext';
+import { CartProvider } from './context/CartContext'; 
 
 function App() {
   return (
-      
       <AuthProvider>
-         <div className="App">
-            <AppRouter />
-         </div>
+        
+         <CartProvider>
+             <div className="App">
+                <AppRouter />
+             </div>
+         </CartProvider>
       </AuthProvider>
   );
 }

@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useContext } from 'react'; // 1. Thêm useContext
 import { Layout, Menu, Button, Badge, Dropdown, Avatar, Typography, Space } from 'antd';
 import { ShoppingCartOutlined, UserOutlined, LogoutOutlined } from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+// 2. Import CartContext
+import { CartContext } from '../../context/CartContext'; 
 import './AppHeader.css';
 
 const { Header } = Layout;
@@ -11,6 +13,9 @@ const { Text } = Typography;
 const AppHeader = () => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
+
+    // 3. Lấy tổng số lượng sản phẩm từ Context
+    const { totalItems } = useContext(CartContext);
 
     // --- 1. Xử lý Đăng xuất ---
     const handleLogout = () => {
@@ -25,7 +30,7 @@ const AppHeader = () => {
                 navigate('/');
                 break;
             case 'products':
-                // navigate('/products'); // Mở comment khi bạn làm trang danh sách
+                // navigate('/products'); 
                 break;
             case 'men':
                 // navigate('/category/men');
@@ -67,14 +72,16 @@ const AppHeader = () => {
                     mode="horizontal" 
                     defaultSelectedKeys={['home']} 
                     items={mainMenuItems} 
-                    onClick={handleMenuClick} // <--- Gắn hàm xử lý vào đây
-                    disabledOverflow // Ngăn menu bị co lại thành dấu "..."
+                    onClick={handleMenuClick} 
+                    disabledOverflow 
                 />
             </div>
 
             {/* --- Khu vực User & Giỏ hàng --- */}
             <div className="d-flex align-center gap-md" style={{ height: '100%' }}>
-                <Badge count={2} onClick={() => navigate('/cart')} className="cursor-pointer">
+                
+                {/* 👇 4. CẬP NHẬT BADGE TẠI ĐÂY */}
+                <Badge count={totalItems} showZero onClick={() => navigate('/cart')} className="cursor-pointer">
                     <Button icon={<ShoppingCartOutlined />} shape="circle" size="large" />
                 </Badge>
 
@@ -83,12 +90,11 @@ const AppHeader = () => {
                         menu={{ items: userMenuItems }} 
                         placement="bottomRight" 
                         arrow
-                        rootClassName="user-app-scope" // Dùng rootClassName thay vì overlayClassName cho Antd mới
+                        rootClassName="user-app-scope" 
                         getPopupContainer={(trigger) => trigger.parentElement}
                     >
                         <Space className="d-flex align-center gap-sm cursor-pointer header-user-info">
                             <Avatar style={{ backgroundColor: 'var(--primary-color)' }} icon={<UserOutlined />} />
-                            {/* Thêm style màu trắng cho tên user để nổi trên nền đen */}
                             <Text strong style={{ color: '#fff' }}>
                                 {user.fullName || user.username}
                             </Text>

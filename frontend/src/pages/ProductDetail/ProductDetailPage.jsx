@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Row, Col, Typography, Button, Rate, Radio, InputNumber, message, Image, Spin, Divider, Tag } from 'antd';
+import { Row, Col, Typography, Button, Rate, Radio, InputNumber, message, Image, Spin, Divider, Tag, Space } from 'antd';
 import { ShoppingCartOutlined, ThunderboltOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import productService from '../../services/productService';
 import { formatPrice } from '../../utils/format';
+import { CartContext } from '../../context/CartContext';
 import './ProductDetailPage.css';
 
 const { Title, Text, Paragraph } = Typography;
@@ -11,13 +12,19 @@ const { Title, Text, Paragraph } = Typography;
 const ProductDetailPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    
+    const { addToCart } = useContext(CartContext); 
+
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
     
+    // --- STATE QUẢN LÝ SIZE / MÀU ---
     const [selectedSize, setSelectedSize] = useState(null);
+    const [selectedColor, setSelectedColor] = useState(null); // Thêm state Màu
     const [quantity, setQuantity] = useState(1);
+    
     const [availableSizes, setAvailableSizes] = useState([]);
+    const [availableColors, setAvailableColors] = useState([]); // List màu theo size
+    
     const [mainImage, setMainImage] = useState('');
 
     useEffect(() => {
@@ -25,24 +32,46 @@ const ProductDetailPage = () => {
         window.scrollTo(0, 0); 
     }, [id]);
 
+    // Khi chọn Size -> Lọc ra các màu tương ứng của size đó
+    useEffect(() => {
+        if (product && selectedSize) {
+            // Tìm tất cả biến thể có size này
+            const variantsWithSize = product.variants.filter(v => v.size === selectedSize);
+            
+            // Lấy danh sách màu (unique)
+            const colors = [...new Set(variantsWithSize.map(v => v.color))];
+            setAvailableColors(colors);
+            
+            // Reset màu đang chọn (để khách chọn lại)
+            setSelectedColor(null);
+        } else {
+            setAvailableColors([]);
+        }
+    }, [selectedSize, product]);
+
+    // Khi chọn Màu -> Tự động đổi ảnh chính nếu biến thể đó có ảnh riêng
+    useEffect(() => {
+        if (selectedSize && selectedColor) {
+            const variant = getSelectedVariant();
+            if (variant && variant.imageUrl) {
+                setMainImage(variant.imageUrl);
+            }
+        }
+    }, [selectedColor]);
+
     const fetchProductDetail = async () => {
         try {
             setLoading(true);
             const res = await productService.getById(id);
-            const data = res.data; // Dữ liệu từ API
+            const data = res.data; 
             
             setProduct(data);
-            
-            // 1. Set ảnh mặc định là ảnh thumbnail
             setMainImage(data.thumbnail);
 
-            // 2. Xử lý Variants để lấy danh sách Size (Loại bỏ size trùng nhau)
             if (data.variants && data.variants.length > 0) {
-                // Lọc các size unique và sắp xếp tăng dần
                 const uniqueSizes = [...new Set(data.variants.map(v => v.size))].sort((a, b) => a - b);
                 setAvailableSizes(uniqueSizes);
             }
-
         } catch (error) {
             console.error("Lỗi:", error);
             message.error("Không tìm thấy sản phẩm!");
@@ -52,11 +81,10 @@ const ProductDetailPage = () => {
         }
     };
 
-    // Hàm lấy thông tin Variant đang chọn (để biết còn hàng hay không, ID là gì)
+    // Hàm tìm biến thể chính xác dựa trên Size VÀ Màu
     const getSelectedVariant = () => {
-        if (!product || !selectedSize) return null;
-        // Tìm variant khớp với size đã chọn (Lấy cái đầu tiên tìm thấy)
-        return product.variants.find(v => v.size === selectedSize);
+        if (!product || !selectedSize || !selectedColor) return null;
+        return product.variants.find(v => v.size === selectedSize && v.color === selectedColor);
     };
 
     const handleAddToCart = () => {
@@ -64,38 +92,37 @@ const ProductDetailPage = () => {
             message.warning('Vui lòng chọn Size giày!');
             return;
         }
-
-        const currentVariant = getSelectedVariant();
-        
-        // Kiểm tra tồn kho
-        if (currentVariant && currentVariant.stock < quantity) {
-            message.error(`Size ${selectedSize} chỉ còn lại ${currentVariant.stock} sản phẩm!`);
+        if (!selectedColor) {
+            message.warning('Vui lòng chọn Màu sắc!');
             return;
         }
 
-        // Logic thêm giỏ hàng (Sau này sẽ gọi API cart)
-        console.log("Add to cart:", {
-            productId: product.id,
-            variantId: currentVariant?.id, // ID quan trọng để lưu vào DB Order
-            quantity: quantity
-        });
+        const currentVariant = getSelectedVariant();
         
-        message.success(`Đã thêm ${product.name} (Size ${selectedSize}) vào giỏ hàng!`);
+        if (currentVariant && currentVariant.stock < quantity) {
+            message.error(`Mẫu này chỉ còn lại ${currentVariant.stock} sản phẩm!`);
+            return;
+        }
+
+        addToCart(product, quantity, currentVariant);
+        
+        message.success({
+            content: `Đã thêm ${product.name} (Size ${selectedSize} - ${selectedColor}) vào giỏ hàng!`,
+            style: { marginTop: '20vh' },
+        });
     };
 
     if (loading) return <div className="spinner-center"><Spin size="large" /></div>;
     if (!product) return null;
 
-    // Lấy danh sách tất cả ảnh (Thumbnail + Ảnh từ variants nếu có)
     const galleryImages = [
         product.thumbnail,
-        ...(product.variants?.map(v => v.imageUrl).filter(url => url) || []) // Lấy ảnh variant nếu ko null
-    ].slice(0, 5); // Lấy tối đa 5 ảnh để hiển thị demo
+        ...(product.variants?.map(v => v.imageUrl).filter(url => url) || [])
+    ].slice(0, 5);
 
     return (
         <div className="product-detail-container container py-20">
             <Row gutter={[40, 40]}>
-                {/* --- CỘT TRÁI: ẢNH SẢN PHẨM --- */}
                 <Col xs={24} md={12}>
                     <div className="product-image-wrapper">
                         <Image 
@@ -105,13 +132,12 @@ const ProductDetailPage = () => {
                         />
                     </div>
                     
-                    {/* List ảnh nhỏ dynamic từ DB */}
                     <div className="thumbnail-list mt-20 d-flex gap-sm">
                         {galleryImages.map((img, index) => (
                              <div 
                                 key={index} 
                                 className={`thumb-item cursor-pointer ${mainImage === img ? 'active' : ''}`}
-                                onClick={() => setMainImage(img)} // Bấm vào để đổi ảnh chính
+                                onClick={() => setMainImage(img)}
                              >
                                 <img src={img} alt="thumb" />
                              </div>
@@ -119,7 +145,6 @@ const ProductDetailPage = () => {
                     </div>
                 </Col>
 
-                {/* --- CỘT PHẢI: THÔNG TIN --- */}
                 <Col xs={24} md={12}>
                     <div className="product-info-wrapper">
                         <Tag color="blue" className="mb-10">{product.category?.name || "Sneaker"}</Tag>
@@ -140,7 +165,7 @@ const ProductDetailPage = () => {
 
                         <Divider />
 
-                       
+                        {/* --- CHỌN SIZE --- */}
                         <div className="mb-20">
                             <Text strong className="d-block mb-10">
                                 Chọn Size: {selectedSize && <Tag color="green">Size {selectedSize}</Tag>}
@@ -153,9 +178,10 @@ const ProductDetailPage = () => {
                                     buttonStyle="solid"
                                 >
                                     {availableSizes.map(size => {
-                                        
-                                        const variantForSize = product.variants.find(v => v.size === size);
-                                        const isOutOfStock = variantForSize ? variantForSize.stock <= 0 : true;
+                                        // Kiểm tra tổng tồn kho của size này (bất kể màu nào)
+                                        const variantsWithSize = product.variants.filter(v => v.size === size);
+                                        const totalStockForSize = variantsWithSize.reduce((acc, curr) => acc + curr.stock, 0);
+                                        const isOutOfStock = totalStockForSize <= 0;
 
                                         return (
                                             <Radio.Button 
@@ -174,30 +200,61 @@ const ProductDetailPage = () => {
                             )}
                         </div>
 
-                        {/* Chọn Số lượng */}
+                        {/* --- CHỌN MÀU (Chỉ hiện khi đã chọn Size) --- */}
+                        {selectedSize && (
+                            <div className="mb-20">
+                                <Text strong className="d-block mb-10">
+                                    Chọn Màu: {selectedColor && <Tag color="orange">{selectedColor}</Tag>}
+                                </Text>
+                                <Radio.Group 
+                                    value={selectedColor} 
+                                    onChange={(e) => setSelectedColor(e.target.value)}
+                                >
+                                    {availableColors.map(color => {
+                                        // Kiểm tra tồn kho cụ thể của Size + Màu này
+                                        const variant = product.variants.find(v => v.size === selectedSize && v.color === color);
+                                        const isStock = variant ? variant.stock > 0 : false;
+
+                                        return (
+                                            <Radio.Button 
+                                                key={color} 
+                                                value={color}
+                                                disabled={!isStock}
+                                                style={{ marginRight: 8, borderRadius: 4 }}
+                                            >
+                                                {color}
+                                            </Radio.Button>
+                                        );
+                                    })}
+                                </Radio.Group>
+                            </div>
+                        )}
+
+                        {/* --- SỐ LƯỢNG & STOCK --- */}
                         <div className="mb-20">
                             <Text strong className="d-block mb-10">Số lượng:</Text>
                             <InputNumber 
                                 min={1} 
-                                max={getSelectedVariant()?.stock} 
+                                max={getSelectedVariant()?.stock || 1} 
                                 value={quantity} 
                                 onChange={setQuantity} 
                                 size="large"
+                                disabled={!selectedSize || !selectedColor} // Khóa lại nếu chưa chọn đủ
                             />
-                            {selectedSize && getSelectedVariant() && (
+                            {selectedSize && selectedColor && getSelectedVariant() && (
                                 <Text type="secondary" className="ml-10">
                                     (Còn {getSelectedVariant().stock} sản phẩm)
                                 </Text>
                             )}
                         </div>
 
-                        {/* Nút Action */}
                         <div className="d-flex gap-md mt-40 action-buttons">
                             <Button 
                                 size="large" 
                                 icon={<ShoppingCartOutlined />} 
                                 className="flex-1 btn-add-cart"
                                 onClick={handleAddToCart}
+                                disabled={!selectedSize || !selectedColor}
                             >
                                 THÊM VÀO GIỎ
                             </Button>
@@ -207,12 +264,12 @@ const ProductDetailPage = () => {
                                 size="large" 
                                 icon={<ThunderboltOutlined />} 
                                 className="flex-1 btn-buy-now"
+                                disabled={!selectedSize || !selectedColor}
                             >
                                 MUA NGAY
                             </Button>
                         </div>
 
-                        {/* Cam kết */}
                         <div className="policy-box mt-40">
                             <div className="d-flex gap-sm align-center mb-10">
                                 <CheckCircleOutlined style={{ color: '#52c41a' }} />

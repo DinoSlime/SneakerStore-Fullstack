@@ -326,7 +326,7 @@ const ProductManager = () => {
                                     
                                     <Form.Item style={{ marginTop: 10 }}>
                                         <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
-                                            + Thêm phân loại hàng mới
+                                             Thêm phân loại hàng mới
                                         </Button>
                                     </Form.Item>
                                 </>

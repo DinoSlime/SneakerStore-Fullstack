@@ -3,7 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
 import HomePage from '../pages/HomePage';
 import ProductDetailPage from '../pages/ProductDetail/ProductDetailPage';
-
+import CartPage from '../pages/CartPage/CartPage';
 const UserRouter = () => {
     return (
         <Routes>
@@ -12,8 +12,8 @@ const UserRouter = () => {
 
                 <Route path="product/:id" element={<ProductDetailPage />} />
                 
-                {/* Đường dẫn: /cart */}
-                <Route path="cart" element={<div>Giỏ hàng (Sẽ làm sau)</div>} />
+                
+               <Route path="/cart" element={<CartPage />} />
             </Route>
         </Routes>
     );
