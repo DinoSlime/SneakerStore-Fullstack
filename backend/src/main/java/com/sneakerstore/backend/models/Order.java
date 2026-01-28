@@ -47,5 +47,6 @@ public class Order extends BaseEntity {
 
     // 👇 QUAN TRỌNG: Mối quan hệ 1-N với chi tiết đơn hàng
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonManagedReference
     private List<OrderDetail> orderDetails;
 }

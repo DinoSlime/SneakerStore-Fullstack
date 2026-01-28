@@ -1,9 +1,8 @@
-import React, { useContext } from 'react'; // 1. Thêm useContext
+import React, { useContext } from 'react'; 
 import { Layout, Menu, Button, Badge, Dropdown, Avatar, Typography, Space } from 'antd';
 import { ShoppingCartOutlined, UserOutlined, LogoutOutlined } from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-// 2. Import CartContext
 import { CartContext } from '../../context/CartContext'; 
 import './AppHeader.css';
 
@@ -14,7 +13,7 @@ const AppHeader = () => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
 
-    // 3. Lấy tổng số lượng sản phẩm từ Context
+    // Lấy tổng số lượng sản phẩm từ Context
     const { totalItems } = useContext(CartContext);
 
     // --- 1. Xử lý Đăng xuất ---
@@ -35,7 +34,6 @@ const AppHeader = () => {
             case 'men':
                 // navigate('/category/men');
                 break;
-            // ... xử lý các case khác
             default:
                 break;
         }
@@ -52,10 +50,25 @@ const AppHeader = () => {
 
     // Danh sách mục Dropdown User
     const userMenuItems = [
-        { key: 'profile', label: <Link to="/profile">Thông tin tài khoản</Link>, icon: <UserOutlined /> },
-        { key: 'orders', label: 'Đơn mua', icon: <ShoppingCartOutlined /> },
+        { 
+            key: 'profile', 
+            label: <Link to="/profile">Thông tin tài khoản</Link>, 
+            icon: <UserOutlined /> 
+        },
+        { 
+            key: 'orders', 
+            // 👇 SỬA Ở ĐÂY: Thêm Link vào label
+            label: <Link to="/orders">Đơn mua</Link>, 
+            icon: <ShoppingCartOutlined /> 
+        },
         { type: 'divider' },
-        { key: 'logout', label: 'Đăng xuất', icon: <LogoutOutlined />, onClick: handleLogout, danger: true },
+        { 
+            key: 'logout', 
+            label: 'Đăng xuất', 
+            icon: <LogoutOutlined />, 
+            onClick: handleLogout, 
+            danger: true 
+        },
     ];
 
     return (
@@ -80,7 +93,7 @@ const AppHeader = () => {
             {/* --- Khu vực User & Giỏ hàng --- */}
             <div className="d-flex align-center gap-md" style={{ height: '100%' }}>
                 
-                {/* 👇 4. CẬP NHẬT BADGE TẠI ĐÂY */}
+                {/* Badge hiển thị số lượng */}
                 <Badge count={totalItems} showZero onClick={() => navigate('/cart')} className="cursor-pointer">
                     <Button icon={<ShoppingCartOutlined />} shape="circle" size="large" />
                 </Badge>

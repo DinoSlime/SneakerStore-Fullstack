@@ -86,4 +86,14 @@ public class OrderServiceImpl implements OrderService {
 
         return savedOrder;
     }
+    @Override
+    public List<Order> getOrdersByUserId(Long userId) {
+       return orderRepository.findByUserId(userId);
+    }
+
+    @Override
+    public Order getOrderById(Long orderId) throws Exception {
+        return orderRepository.findById(orderId)
+                .orElseThrow(() -> new Exception("Không tìm thấy đơn hàng ID: " + orderId));
+    }
 }

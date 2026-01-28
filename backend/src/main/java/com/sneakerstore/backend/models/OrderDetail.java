@@ -18,6 +18,7 @@ public class OrderDetail {
 
     @ManyToOne
     @JoinColumn(name = "order_id")
+    @com.fasterxml.jackson.annotation.JsonBackReference
     private Order order;
 
     @ManyToOne

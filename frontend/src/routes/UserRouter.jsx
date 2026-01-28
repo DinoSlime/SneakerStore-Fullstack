@@ -5,6 +5,8 @@ import HomePage from '../pages/HomePage';
 import ProductDetailPage from '../pages/ProductDetail/ProductDetailPage';
 import CartPage from '../pages/CartPage/CartPage';
 import CheckoutPage from '../pages/Checkout/CheckoutPage';
+import OrderHistoryPage from '../pages/Order/OrderHistoryPage';
+import OrderDetailPage from '../pages/Order/OrderDetailPage';
 const UserRouter = () => {
     return (
         <Routes>
@@ -15,6 +17,8 @@ const UserRouter = () => {
                 
                 <Route path="/checkout" element={<CheckoutPage />} />
                <Route path="/cart" element={<CartPage />} />
+               <Route path="/orders" element={<OrderHistoryPage />} />
+                <Route path="/order/:id" element={<OrderDetailPage />} />
             </Route>
         </Routes>
     );

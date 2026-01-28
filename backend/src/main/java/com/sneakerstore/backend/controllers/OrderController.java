@@ -27,4 +27,21 @@ public class OrderController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+    @GetMapping("/user/{user_id}")
+    public ResponseEntity<?> getOrdersByUser(@PathVariable("user_id") Long userId) {
+        try {
+            return ResponseEntity.ok(orderService.getOrdersByUserId(userId));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getOrderById(@PathVariable("id") Long id) {
+        try {
+            return ResponseEntity.ok(orderService.getOrderById(id));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }
