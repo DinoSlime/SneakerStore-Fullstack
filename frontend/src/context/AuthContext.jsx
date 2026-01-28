@@ -1,29 +1,32 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useContext } from 'react'; // Bỏ useEffect thừa
 import { message } from 'antd';
 import { useNavigate } from 'react-router-dom';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
     const navigate = useNavigate();
 
-    // Khôi phục phiên đăng nhập khi F5 trang
-    useEffect(() => {
+    // 👇 SỬA Ở ĐÂY: Đọc dữ liệu ngay khi khởi tạo State
+    const [user, setUser] = useState(() => {
         try {
             const storedUser = localStorage.getItem('user');
             const token = localStorage.getItem('token');
             
+            // Nếu có đủ cả user và token thì lấy ra dùng luôn
             if (storedUser && token) {
-                setUser(JSON.parse(storedUser)); 
+                return JSON.parse(storedUser);
             }
+            return null;
         } catch (error) {
-            // Nếu dữ liệu rác hoặc lỗi JSON -> Xóa sạch để tránh trắng trang
+            // Nếu dữ liệu lỗi thì xóa sạch
             localStorage.removeItem('user');
             localStorage.removeItem('token');
-            setUser(null);
+            return null;
         }
-    }, []);
+    });
+
+    // (Đã bỏ useEffect vì không cần thiết nữa)
 
     const login = (userData, token) => {
         setUser(userData);

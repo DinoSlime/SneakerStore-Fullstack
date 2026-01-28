@@ -4,7 +4,7 @@ import AdminRouter from './AdminRouter';
 import UserRouter from './UserRouter';
 import LoginPage from '../pages/Auth/LoginPage'; // Mới tạo
 import RegisterPage from '../pages/Auth/RegisterPage'; 
-import PrivateRoute from '../components/PrivateRoute'; // Mới tạo
+import PrivateRoute from '../components/PrivateRoute'; 
 
 const AppRouter = () => {
     return (

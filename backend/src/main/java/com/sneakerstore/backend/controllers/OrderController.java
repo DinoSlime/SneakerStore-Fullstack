@@ -44,4 +44,25 @@ public class OrderController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+    @GetMapping("/admin/get-all")
+    public ResponseEntity<?> getAllOrders() {
+        try {
+            return ResponseEntity.ok(orderService.getAllOrders());
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // 2. Cập nhật trạng thái đơn (Admin)
+    @PutMapping("/admin/update-status/{id}")
+    public ResponseEntity<?> updateOrderStatus(
+            @PathVariable Long id, 
+            @RequestParam String status) { // Nhận status qua param (?status=SHIPPING)
+        try {
+            orderService.updateOrderStatus(id, status);
+            return ResponseEntity.ok("Cập nhật trạng thái thành công");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }

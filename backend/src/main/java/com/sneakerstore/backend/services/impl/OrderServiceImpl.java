@@ -7,7 +7,7 @@ import com.sneakerstore.backend.services.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import org.springframework.data.domain.Sort;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -95,5 +95,19 @@ public class OrderServiceImpl implements OrderService {
     public Order getOrderById(Long orderId) throws Exception {
         return orderRepository.findById(orderId)
                 .orElseThrow(() -> new Exception("Không tìm thấy đơn hàng ID: " + orderId));
+    }
+    @Override
+    public List<Order> getAllOrders() {
+        // Lấy tất cả đơn hàng, sắp xếp mới nhất lên đầu (ID giảm dần)
+        return orderRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
+    }
+
+    @Override
+    public void updateOrderStatus(Long orderId, String status) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng ID: " + orderId));
+        
+        order.setStatus(status);
+        orderRepository.save(order);
     }
 }

@@ -30,6 +30,24 @@ const OrderDetailPage = () => {
         }
     };
 
+    // 👇 1. Hàm hiển thị Trạng thái bằng tiếng Việt + Màu sắc
+    const renderStatus = (status) => {
+        switch (status) {
+            case 'PENDING': return <Tag color="orange">Chờ xác nhận</Tag>;
+            case 'SHIPPING': return <Tag color="blue">Đang giao hàng</Tag>;
+            case 'DELIVERED': return <Tag color="green">Đã giao hàng</Tag>;
+            case 'CANCELLED': return <Tag color="red">Đã hủy</Tag>;
+            default: return <Tag>{status}</Tag>;
+        }
+    };
+
+    // 👇 2. Hàm hiển thị Phương thức thanh toán tiếng Việt
+    const renderPaymentMethod = (method) => {
+        if (method === 'COD') return <Tag color="cyan">Thanh toán khi nhận hàng (COD)</Tag>;
+        if (method === 'BANK') return <Tag color="geekblue">Chuyển khoản ngân hàng</Tag>;
+        return <Tag>{method}</Tag>;
+    };
+
     if (loading) return <div className="spinner-center"><Spin size="large" /></div>;
     if (!order) return <div className="text-center py-20">Không tìm thấy đơn hàng</div>;
 
@@ -86,7 +104,7 @@ const OrderDetailPage = () => {
                 <div className="detail-header">
                     <div>
                         <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/orders')}>
-                            Quay lại
+                            Quay lại danh sách
                         </Button>
                     </div>
                     <div style={{ textAlign: 'right' }}>
@@ -98,7 +116,6 @@ const OrderDetailPage = () => {
                 {/* Card thông tin */}
                 <Row gutter={[24, 24]} className="mb-30">
                     <Col xs={24} md={12}>
-                        {/* 👇 Đã sửa: dùng variant="borderless" thay cho bordered={false} */}
                         <Card 
                             title={<><ShoppingOutlined /> Thông tin nhận hàng</>} 
                             className="info-card" 
@@ -124,7 +141,6 @@ const OrderDetailPage = () => {
                     </Col>
                     
                     <Col xs={24} md={12}>
-                        {/* 👇 Đã sửa: dùng variant="borderless" thay cho bordered={false} */}
                         <Card 
                             title={<><CreditCardOutlined /> Thanh toán & Trạng thái</>} 
                             className="info-card" 
@@ -133,15 +149,15 @@ const OrderDetailPage = () => {
                             <div className="info-row">
                                 <span className="info-label">Phương thức:</span>
                                 <span className="info-value">
-                                    <Tag color="blue">{order.paymentMethod}</Tag>
+                                    {/* 👇 Sử dụng hàm render tiếng Việt */}
+                                    {renderPaymentMethod(order.paymentMethod)}
                                 </span>
                             </div>
                             <div className="info-row">
                                 <span className="info-label">Trạng thái:</span>
                                 <span className="info-value">
-                                    <Tag color={order.status === 'PENDING' ? 'orange' : 'green'}>
-                                        {order.status}
-                                    </Tag>
+                                    {/* 👇 Sử dụng hàm render tiếng Việt */}
+                                    {renderStatus(order.status)}
                                 </span>
                             </div>
                         </Card>

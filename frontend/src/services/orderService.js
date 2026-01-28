@@ -9,6 +9,15 @@ const orderService = {
     },
     getOrderById: (orderId) => {
         return axios.get(`/orders/${orderId}`);
+    },
+    getAllOrders: () => {
+        return axios.get('/orders/admin/get-all');
+    },
+    updateOrderStatus: (orderId, status) => {
+        // Gọi PUT /api/orders/admin/update-status/1?status=SHIPPING
+        return axios.put(`/orders/admin/update-status/${orderId}`, null, {
+            params: { status }
+        });
     }
 };
 

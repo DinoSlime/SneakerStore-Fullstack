@@ -8,7 +8,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -31,35 +30,42 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                        // 1. PUBLIC ENDPOINTS (Không cần đăng nhập)
-                        .requestMatchers("/api/users/register", "/api/users/login").permitAll()
-                        
-                        // Cho phép xem danh sách sản phẩm, chi tiết sản phẩm, danh mục
-                        .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
-                        
-                        // Cho phép xem ảnh (quan trọng)
-                        .requestMatchers("/api/products/images/**").permitAll() 
-                        .requestMatchers("/api/images/**").permitAll()
 
-                        // 2. ADMIN ENDPOINTS (Chỉ Role ADMIN mới được vào)
-                        // Quản lý Category: Thêm, Sửa, Xóa -> ADMIN
+                        // Đăng ký, Đăng nhập
+                        .requestMatchers("/api/users/register", "/api/users/login").permitAll()
+
+                        // Xem danh sách và chi tiết Sản phẩm, Danh mục (GET only)
+                        .requestMatchers(HttpMethod.GET, "/api/categories/**", "/api/products/**").permitAll()
+
+                        // Xem ảnh sản phẩm (Rất quan trọng để hiển thị frontend)
+                        .requestMatchers(HttpMethod.GET, "/api/products/images/**", "/api/images/**").permitAll()
+
+                        // Quản lý Category (Thêm, Sửa, Xóa)
                         .requestMatchers(HttpMethod.POST, "/api/categories/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/categories/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/categories/**").hasRole("ADMIN")
 
-                        // Quản lý Product: Thêm, Sửa, Xóa -> ADMIN
+                        // Quản lý Product (Thêm, Sửa, Xóa)
                         .requestMatchers(HttpMethod.POST, "/api/products/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/products/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/products/**").hasRole("ADMIN")
 
-                        // Quản lý Order: Admin được quyền sửa trạng thái, xóa đơn
-                        .requestMatchers(HttpMethod.PUT, "/api/orders/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/orders/**").hasRole("ADMIN")
+                        // Quản lý Đơn hàng (Dành riêng cho Admin)
+                        // Xem tất cả đơn, cập nhật trạng thái
+                        .requestMatchers("/api/orders/**").hasRole("ADMIN")
 
-                        // 3. AUTHENTICATED (Đăng nhập là được, gồm cả User và Admin)
+                        // Đặt hàng (POST)
+                        .requestMatchers(HttpMethod.POST, "/api/orders/**").authenticated()
+
+                        // Xem lịch sử đơn hàng, chi tiết đơn hàng (GET)
+                        .requestMatchers(HttpMethod.GET, "/api/orders/**").authenticated()
+
+                        // Xem/Sửa thông tin cá nhân (User)
+                        .requestMatchers("/api/users/details").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/users/details/**").authenticated()
+
+                        // Tất cả các request khác chưa khai báo -> Phải đăng nhập mới được vào
                         .anyRequest().authenticated())
-                
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -69,7 +75,8 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS")); // Cho phép đủ các
+                                                                                                   // method
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "x-auth-token"));
         configuration.setExposedHeaders(List.of("x-auth-token"));
         configuration.setAllowCredentials(true);
