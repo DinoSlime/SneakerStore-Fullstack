@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Tag, Button, Typography, Space, Spin } from 'antd';
-import { EyeOutlined } from '@ant-design/icons';
+// 👇 1. IMPORT THÊM ClockCircleOutlined
+import { EyeOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import orderService from '../../services/orderService';
 import { useAuth } from '../../context/AuthContext';
@@ -10,7 +11,6 @@ import './OrderHistoryPage.css';
 const { Title } = Typography;
 
 const OrderHistoryPage = () => {
-    // 1. Khởi tạo state là mảng rỗng []
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(false);
     const { user } = useAuth();
@@ -29,11 +29,10 @@ const OrderHistoryPage = () => {
         try {
             const res = await orderService.getOrdersByUser(user.id);
             
-            // 2. Kiểm tra dữ liệu trả về CÓ PHẢI LÀ MẢNG KHÔNG?
-            // Nếu là mảng -> set dữ liệu
-            // Nếu không phải (null, undefined, error msg...) -> set mảng rỗng để tránh crash
             if (res && Array.isArray(res.data)) {
-                setOrders(res.data);
+                // Sắp xếp đơn mới nhất lên đầu
+                const sortedOrders = res.data.sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate));
+                setOrders(sortedOrders);
             } else {
                 console.warn("API không trả về mảng danh sách:", res);
                 setOrders([]);
@@ -41,20 +40,38 @@ const OrderHistoryPage = () => {
 
         } catch (error) {
             console.error("Lỗi lấy đơn hàng:", error);
-            setOrders([]); // Gặp lỗi thì set rỗng luôn
+            setOrders([]); 
         } finally {
             setLoading(false);
         }
     };
 
-    // Hàm render màu sắc cho trạng thái
+    // 👇 2. CẬP NHẬT HÀM RENDER STATUS (ĐỒNG BỘ VỚI TRANG CHI TIẾT)
     const renderStatus = (status) => {
-        switch (status) {
-            case 'PENDING': return <Tag color="orange">Chờ xác nhận</Tag>;
-            case 'SHIPPING': return <Tag color="blue">Đang giao</Tag>;
-            case 'DELIVERED': return <Tag color="green">Đã giao</Tag>;
-            case 'CANCELLED': return <Tag color="red">Đã hủy</Tag>;
-            default: return <Tag>{status}</Tag>;
+        // Chuyển về chữ hoa để so sánh cho chuẩn
+        const normalizedStatus = status ? status.toUpperCase() : '';
+
+        switch (normalizedStatus) {
+            case 'PENDING': 
+                return <Tag color="orange">Chờ thanh toán</Tag>; // Sửa thành "Chờ thanh toán" cho rõ nghĩa
+            
+            case 'WAITING_CONFIRM': 
+                return <Tag color="geekblue" icon={<ClockCircleOutlined />}>Chờ xác nhận tiền</Tag>;
+            
+            case 'CONFIRMED': 
+                return <Tag color="cyan">Đã xác nhận</Tag>;
+
+            case 'SHIPPING': 
+                return <Tag color="blue">Đang giao hàng</Tag>;
+            
+            case 'DELIVERED': 
+                return <Tag color="green">Đã giao hàng</Tag>;
+            
+            case 'CANCELLED': 
+                return <Tag color="red">Đã hủy</Tag>;
+            
+            default: 
+                return <Tag>{status}</Tag>;
         }
     };
 
@@ -76,6 +93,7 @@ const OrderHistoryPage = () => {
             title: 'Trạng thái', 
             dataIndex: 'status', 
             key: 'status', 
+            align: 'center', // Căn giữa cột trạng thái cho đẹp
             render: (status) => renderStatus(status) 
         },
         {
@@ -87,7 +105,7 @@ const OrderHistoryPage = () => {
                     ghost 
                     size="small" 
                     icon={<EyeOutlined />} 
-                    className="btn-view-detail" // 👈 NHỚ THÊM DÒNG NÀY
+                    className="btn-view-detail" 
                     onClick={() => navigate(`/order/${record.id}`)} 
                 >
                     Xem chi tiết
@@ -108,8 +126,8 @@ const OrderHistoryPage = () => {
                     columns={columns} 
                     dataSource={orders} 
                     rowKey="id" 
-                    pagination={{ pageSize: 5 }} 
-                    locale={{ emptyText: 'Bạn chưa có đơn hàng nào' }} // Thông báo khi bảng rỗng
+                    pagination={{ pageSize: 10 }} // Tăng lên 10 đơn mỗi trang xem cho thoải mái
+                    locale={{ emptyText: 'Bạn chưa có đơn hàng nào' }} 
                 />
             )}
         </div>

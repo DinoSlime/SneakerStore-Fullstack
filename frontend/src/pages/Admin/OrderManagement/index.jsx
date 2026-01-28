@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Tag, Select, message, Typography, Space } from 'antd';
+import { Table, Tag, Select, message, Typography, Space, Badge } from 'antd'; // Thêm Badge
 import orderService from '../../../services/orderService';
 import { formatPrice, formatDate } from '../../../utils/format';
 
@@ -19,7 +19,9 @@ const OrderManagement = () => {
         try {
             const res = await orderService.getAllOrders();
             if (res && Array.isArray(res.data)) {
-                setOrders(res.data);
+                // Sắp xếp đơn mới nhất lên đầu
+                const sortedOrders = res.data.sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate));
+                setOrders(sortedOrders);
             }
         } catch (error) {
             message.error("Lỗi tải danh sách đơn hàng");
@@ -33,17 +35,16 @@ const OrderManagement = () => {
         try {
             await orderService.updateOrderStatus(orderId, newStatus);
             message.success(`Đã cập nhật trạng thái đơn #${orderId} thành công`);
-            // Load lại bảng để thấy thay đổi
             fetchAllOrders();
         } catch (error) {
             message.error("Cập nhật thất bại");
         }
     };
 
-    // Hàm render màu sắc cho badge thanh toán
+    // Hàm render màu sắc cho phương thức thanh toán (Đồng bộ với User)
     const renderPaymentMethod = (method) => {
-        if (method === 'COD') return <Tag color="orange">Thanh toán khi nhận hàng (COD)</Tag>;
-        if (method === 'BANK') return <Tag color="blue">Chuyển khoản</Tag>;
+        if (method === 'COD') return <Tag color="cyan">Thanh toán khi nhận (COD)</Tag>;
+        if (method === 'BANK') return <Tag color="geekblue">Chuyển khoản</Tag>;
         return <Tag>{method}</Tag>;
     };
 
@@ -74,21 +75,49 @@ const OrderManagement = () => {
             title: 'Trạng thái',
             dataIndex: 'status',
             key: 'status',
-            render: (status, record) => (
-                <Select
-                    defaultValue={status}
-                    style={{ width: 160 }} // Tăng độ rộng để vừa chữ tiếng Việt
-                    onChange={(value) => handleStatusChange(record.id, value)}
-                    // Nếu trạng thái là Hủy thì viền đỏ cảnh báo
-                    status={status === 'CANCELLED' ? 'error' : ''} 
-                >
-                    {/* 👇 ĐÃ SỬA THÀNH TIẾNG VIỆT TẠI ĐÂY */}
-                    <Option value="PENDING">Chờ xác nhận</Option>
-                    <Option value="SHIPPING">Đang giao hàng</Option>
-                    <Option value="DELIVERED">Đã giao hàng</Option>
-                    <Option value="CANCELLED">Đã hủy</Option>
-                </Select>
-            ),
+            render: (status, record) => {
+                // Logic màu sắc cho viền Select để Admin dễ nhận diện đơn cần xử lý gấp
+                let statusColor = '';
+                if (status === 'WAITING_CONFIRM') statusColor = 'blue'; 
+                if (status === 'CANCELLED') statusColor = 'error';
+                if (status === 'DELIVERED') statusColor = 'success';
+
+                return (
+                    <Select
+                        defaultValue={status}
+                        style={{ width: 180 }} // Tăng độ rộng
+                        onChange={(value) => handleStatusChange(record.id, value)}
+                        status={statusColor} 
+                    >
+                        {/* 👇 ĐỒNG BỘ TIẾNG VIỆT VÀ TRẠNG THÁI VỚI APP USER */}
+                        
+                        <Option value="PENDING">
+                            <Badge status="warning" text="Chờ thanh toán" />
+                        </Option>
+                        
+                        {/* 👇 QUAN TRỌNG: Admin cần thấy cái này để duyệt tiền */}
+                        <Option value="WAITING_CONFIRM">
+                            <Badge status="processing" text="Chờ xác nhận tiền" />
+                        </Option>
+
+                        <Option value="CONFIRMED">
+                            <Badge status="default" text="Đã xác nhận" />
+                        </Option>
+                        
+                        <Option value="SHIPPING">
+                            <Badge color="blue" text="Đang giao hàng" />
+                        </Option>
+                        
+                        <Option value="DELIVERED">
+                            <Badge status="success" text="Đã giao hàng" />
+                        </Option>
+                        
+                        <Option value="CANCELLED">
+                            <Badge status="error" text="Đã hủy" />
+                        </Option>
+                    </Select>
+                );
+            },
         },
     ];
 
@@ -100,7 +129,7 @@ const OrderManagement = () => {
                 columns={columns} 
                 rowKey="id" 
                 loading={loading}
-                pagination={{ pageSize: 8 }}
+                pagination={{ pageSize: 10 }}
             />
         </div>
     );

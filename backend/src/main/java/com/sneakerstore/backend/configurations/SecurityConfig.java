@@ -56,7 +56,7 @@ public class SecurityConfig {
 
                         // Đặt hàng (POST)
                         .requestMatchers(HttpMethod.POST, "/api/orders/**").authenticated()
-
+                        .requestMatchers("/api/payment/**").authenticated()
                         // Xem lịch sử đơn hàng, chi tiết đơn hàng (GET)
                         .requestMatchers(HttpMethod.GET, "/api/orders/**").authenticated()
 
